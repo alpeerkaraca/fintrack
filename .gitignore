@@ -10,13 +10,6 @@ target/
 *.jar
 *.war
 
-server/src/main/resources/application-dev.yaml
-server/src/main/java/com/alpeerkaraca/fintrackserver/Config
-server/src/main/java/com/alpeerkaraca/fintrackserver/Controller
-server/src/main/java/com/alpeerkaraca/fintrackserver/DTO
-server/src/main/java/com/alpeerkaraca/fintrackserver/Model
-server/src/main/java/com/alpeerkaraca/fintrackserver/Repository
-server/src/main/java/com/alpeerkaraca/fintrackserver/Service
 
 # General Ignored Files
 .DS_Store
