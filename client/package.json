@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:https": "next dev --turbopack --experimental-https --experimental-https-cert ../certs/localhost.pem --experimental-https-key ../certs/localhost-key.pem",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
@@ -16,7 +17,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "recharts": "^3.7.0",
+    "recharts": "^2.15.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
