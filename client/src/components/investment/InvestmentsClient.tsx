@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
   Edit2,
   Plus,
   TrendingDown,
@@ -10,7 +9,6 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import {
   Cell,
   Pie,
@@ -201,16 +199,10 @@ export default function InvestmentsClient() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <>
       <div className="border-b border-border bg-card/60 px-6 py-6 lg:px-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="rounded-xl border border-border bg-background/60 p-2.5 transition hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
+          <div>
             <div>
               <p className="text-sm text-muted-foreground">Portfolio Manager</p>
               <h1 className="text-2xl font-semibold">Investments</h1>
@@ -619,6 +611,6 @@ export default function InvestmentsClient() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

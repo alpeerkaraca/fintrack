@@ -9,15 +9,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import Link from "next/link";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  BadgeDollarSign,
   CreditCard,
-  LayoutGrid,
-  PieChart,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 
@@ -33,13 +28,6 @@ import {
   USD_TRY_RATE,
 } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
-
-const NAV_ITEMS = [
-  { label: "Dashboard", icon: LayoutGrid, href: "/", active: true },
-  { label: "Budget Entry", icon: Wallet, href: "/budget" },
-  { label: "Investments", icon: TrendingUp, href: "/investment" },
-  { label: "Reports", icon: PieChart, href: "/reports" },
-];
 
 const BASE_ASSETS: InvestmentAsset[] = [
   {
@@ -147,76 +135,8 @@ export default function DashboardClient() {
   }));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="flex flex-col lg:flex-row">
-        <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-border bg-card/60">
-          <div className="px-6 py-7 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary grid place-items-center font-semibold">
-              FT
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Personal Finance</p>
-              <h1 className="text-lg font-semibold">FinTrack</h1>
-            </div>
-          </div>
-          <nav className="px-4 pb-6">
-            {NAV_ITEMS.map((item) => {
-              if (item.href === "#") {
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition",
-                      item.active
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              }
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition",
-                    item.active
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="px-6 pb-8">
-            <div className="rounded-2xl border border-border bg-background/80 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Live FX
-              </p>
-              <div className="mt-2 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">USD/TRY</p>
-                  <p className="text-2xl font-semibold">{USD_TRY_RATE}</p>
-                </div>
-                <BadgeDollarSign className="h-6 w-6 text-primary" />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Mocked exchange rate update every session.
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        <main className="flex-1">
-          <div className="border-b border-border px-6 py-6 lg:px-10">
+    <>
+      <div className="border-b border-border px-6 py-6 lg:px-10">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
@@ -265,9 +185,9 @@ export default function DashboardClient() {
                 </div>
               </div>
             </div>
-          </div>
+      </div>
 
-          <section className="px-6 py-6 lg:px-10">
+      <section className="px-6 py-6 lg:px-10">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-border bg-card/70 p-5">
                 <p className="text-xs text-muted-foreground">Monthly Income</p>
@@ -611,9 +531,7 @@ export default function DashboardClient() {
                 </p>
               </div>
             </div>
-          </section>
-        </main>
-      </div>
-    </div>
+      </section>
+    </>
   );
 }

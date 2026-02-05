@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  ArrowLeft,
   Calendar,
   CreditCard,
   DollarSign,
@@ -14,7 +13,6 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import Link from "next/link";
 
 import {
   BASE_TRANSACTIONS,
@@ -134,16 +132,10 @@ export default function BudgetEntryClient() {
     .reduce((sum, t) => sum + t.amountTry, 0);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <>
       <div className="border-b border-border bg-card/60 px-6 py-6 lg:px-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="rounded-xl border border-border bg-background/60 p-2.5 transition hover:bg-muted/50"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
+          <div>
             <div>
               <p className="text-sm text-muted-foreground">Transaction Manager</p>
               <h1 className="text-2xl font-semibold">Budget Entry</h1>
@@ -546,6 +538,6 @@ export default function BudgetEntryClient() {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
