@@ -1,6 +1,7 @@
 package com.alpeerkaraca.fintrackserver.Model;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -35,6 +36,9 @@ public class UserProfile {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal netSalaryUsd;
 
     @Column(nullable = false)
     private final Instant createdAt = Instant.now();
