@@ -28,6 +28,7 @@ import {
   USD_TRY_RATE,
 } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth";
 
 const BASE_ASSETS: InvestmentAsset[] = [
   {
@@ -78,8 +79,17 @@ const getLimitState = (category: BudgetCategory) => {
 
 export default function DashboardClient() {
   const [usdSalary, setUsdSalary] = useState(1190);
+  const [username, setUsername] = useState("User");
   const [selectedMonth, setSelectedMonth] = useState("2026-03");
   const [assets, setAssets] = useState(() => updateProfitLoss(BASE_ASSETS));
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setUsername(user.username);
+      setUsdSalary(user.netSalaryUsd);
+    }
+  }, []);
 
   const transactions = useMemo(
     () => expandInstallments(BASE_TRANSACTIONS),
@@ -140,7 +150,7 @@ export default function DashboardClient() {
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Welcome back, Alper
+                  Welcome back, {username}
                 </p>
                 <h2 className="text-2xl font-semibold">Dashboard Overview</h2>
               </div>

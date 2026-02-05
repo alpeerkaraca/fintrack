@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BadgeDollarSign,
+  LogOut,
   LayoutGrid,
   PieChart,
   TrendingUp,
@@ -12,6 +13,7 @@ import {
 
 import { USD_TRY_RATE } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/lib/auth";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutGrid, href: "/" },
@@ -29,6 +31,17 @@ const isActivePath = (pathname: string, href: string) => {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+
+  if (isAuthPage) {
+    return <main className="min-h-screen bg-background text-foreground">{children}</main>;
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace("/login");
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -76,6 +89,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 Mocked exchange rate update every session.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2.5 text-sm text-muted-foreground transition hover:text-foreground hover:bg-muted/50"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
           </div>
         </aside>
 

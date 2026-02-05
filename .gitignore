@@ -10,6 +10,9 @@ target/
 *.jar
 *.war
 
+# Certificates and Keys
+*.pem
+
 
 # General Ignored Files
 .DS_Store
