@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+app:
+  jwt:
+    secret: test-secret-key-is-here-and-it-is-so-secure-as-you-can-see
+    expiration: 3600000
+    refresh-expiration: 86400000
+    issuer: test-issuer
+    audience: test-audience

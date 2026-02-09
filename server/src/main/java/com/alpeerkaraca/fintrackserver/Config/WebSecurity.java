@@ -1,4 +1,4 @@
-package com.alpeerkaraca.fintrackserver.Config;
+package com.alpeerkaraca.fintrackserver.config;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import com.alpeerkaraca.fintrackserver.Security.JwtSecurityFilter;
+import com.alpeerkaraca.fintrackserver.security.JwtSecurityFilter;
 
 @Configuration
 @EnableWebSecurity
