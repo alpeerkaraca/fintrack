@@ -9,20 +9,22 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
 class InvestmentAssetRepositoryTest {
+    UUID testAssetId = UUID.fromString("ff50e376-c451-4ad0-848d-f4deeb8ca0c9");
     @Autowired
     private InvestmentAssetRepository investmentAssetRepository;
-
     private InvestmentAsset testAsset;
 
     @BeforeEach
     void setUp() {
         testAsset = InvestmentAsset.builder()
+                .id(testAssetId)
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(100))
@@ -45,7 +47,7 @@ class InvestmentAssetRepositoryTest {
     void shouldFindAssetBySymbol() {
         investmentAssetRepository.save(testAsset);
 
-        Optional<InvestmentAsset> found = investmentAssetRepository.findById("AAPL");
+        Optional<InvestmentAsset> found = investmentAssetRepository.findById(testAssetId);
 
         assertThat(found).isPresent();
         assertThat(found.get().getSymbol()).isEqualTo("AAPL");
@@ -54,7 +56,7 @@ class InvestmentAssetRepositoryTest {
 
     @Test
     void shouldReturnEmptyWhenAssetNotFound() {
-        Optional<InvestmentAsset> found = investmentAssetRepository.findById("NONEXISTENT");
+        Optional<InvestmentAsset> found = investmentAssetRepository.findById(UUID.randomUUID());
 
         assertThat(found).isEmpty();
     }
@@ -63,9 +65,9 @@ class InvestmentAssetRepositoryTest {
     void shouldDeleteInvestmentAsset() {
         investmentAssetRepository.save(testAsset);
 
-        investmentAssetRepository.deleteById("AAPL");
+        investmentAssetRepository.deleteById(testAssetId);
 
-        Optional<InvestmentAsset> found = investmentAssetRepository.findById("AAPL");
+        Optional<InvestmentAsset> found = investmentAssetRepository.findById(testAssetId);
         assertThat(found).isEmpty();
     }
 
@@ -78,7 +80,7 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(testAsset);
 
-        InvestmentAsset updated = investmentAssetRepository.findById("AAPL").get();
+        InvestmentAsset updated = investmentAssetRepository.findById(testAssetId).get();
         assertThat(updated.getCurrentPriceTry()).isEqualByComparingTo(BigDecimal.valueOf(200));
         assertThat(updated.getProfitLossTry()).isEqualByComparingTo(BigDecimal.valueOf(5000));
     }
@@ -87,7 +89,7 @@ class InvestmentAssetRepositoryTest {
     void shouldPreserveAssetName() {
         investmentAssetRepository.save(testAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("AAPL").get();
+        InvestmentAsset found = investmentAssetRepository.findById(testAssetId).get();
 
         assertThat(found.getName()).isEqualTo("Apple Inc.");
     }
@@ -96,7 +98,7 @@ class InvestmentAssetRepositoryTest {
     void shouldPreserveQuantity() {
         investmentAssetRepository.save(testAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("AAPL").get();
+        InvestmentAsset found = investmentAssetRepository.findById(testAssetId).get();
 
         assertThat(found.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(100));
     }
@@ -122,7 +124,10 @@ class InvestmentAssetRepositoryTest {
 
     @Test
     void shouldDistinguishBetweenDifferentAssets() {
+        UUID testAssetId1 = UUID.randomUUID();
+        UUID testAssetId2 = UUID.randomUUID();
         InvestmentAsset apple = InvestmentAsset.builder()
+                .id(testAssetId1)
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(100))
@@ -132,6 +137,7 @@ class InvestmentAssetRepositoryTest {
                 .profitLossTry(BigDecimal.valueOf(3000))
                 .build();
         InvestmentAsset google = InvestmentAsset.builder()
+                .id(testAssetId2)
                 .symbol("GOOGL")
                 .name("Alphabet Inc.")
                 .quantity(BigDecimal.valueOf(50))
@@ -144,8 +150,8 @@ class InvestmentAssetRepositoryTest {
         investmentAssetRepository.save(apple);
         investmentAssetRepository.save(google);
 
-        InvestmentAsset foundApple = investmentAssetRepository.findById("AAPL").get();
-        InvestmentAsset foundGoogle = investmentAssetRepository.findById("GOOGL").get();
+        InvestmentAsset foundApple = investmentAssetRepository.findById(testAssetId1).get();
+        InvestmentAsset foundGoogle = investmentAssetRepository.findById(testAssetId2).get();
 
         assertThat(foundApple.getQuantity()).isNotEqualByComparingTo(foundGoogle.getQuantity());
         assertThat(foundApple.getProfitLossTry()).isNotEqualByComparingTo(foundGoogle.getProfitLossTry());
@@ -154,6 +160,7 @@ class InvestmentAssetRepositoryTest {
     @Test
     void shouldHandleZeroQuantity() {
         InvestmentAsset zeroQuantityAsset = InvestmentAsset.builder()
+                .id(testAssetId)
                 .symbol("ZERO")
                 .name("Zero Holdings")
                 .quantity(BigDecimal.ZERO)
@@ -165,13 +172,16 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(zeroQuantityAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("ZERO").get();
+        InvestmentAsset found = investmentAssetRepository.findById(testAssetId).get();
         assertThat(found.getQuantity()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
     void shouldHandleNegativeProfitLoss() {
+        UUID lossTestAssetId = UUID.randomUUID();
+
         InvestmentAsset losingAsset = InvestmentAsset.builder()
+                .id(lossTestAssetId)
                 .symbol("LOSS")
                 .name("Losing Stock")
                 .quantity(BigDecimal.valueOf(100))
@@ -183,13 +193,14 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(losingAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("LOSS").get();
+        InvestmentAsset found = investmentAssetRepository.findById(lossTestAssetId).get();
         assertThat(found.getProfitLossTry()).isEqualByComparingTo(BigDecimal.valueOf(-3000));
     }
 
     @Test
     void shouldHandleNegativeChangePercent() {
         InvestmentAsset decreasingAsset = InvestmentAsset.builder()
+                .id(testAssetId)
                 .symbol("DOWN")
                 .name("Declining Stock")
                 .quantity(BigDecimal.valueOf(50))
@@ -201,13 +212,15 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(decreasingAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("DOWN").get();
+        InvestmentAsset found = investmentAssetRepository.findById(testAssetId).get();
         assertThat(found.getChangePercent()).isEqualByComparingTo(BigDecimal.valueOf(-25.0));
     }
 
     @Test
     void shouldHandleLargeQuantities() {
+        UUID largeAssetId = UUID.randomUUID();
         InvestmentAsset largeHoldingAsset = InvestmentAsset.builder()
+                .id(largeAssetId)
                 .symbol("LARGE")
                 .name("Large Holdings")
                 .quantity(BigDecimal.valueOf(999999.99))
@@ -219,7 +232,7 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(largeHoldingAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("LARGE").get();
+        InvestmentAsset found = investmentAssetRepository.findById(largeAssetId).get();
         assertThat(found.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(999999.99));
     }
 
@@ -227,32 +240,22 @@ class InvestmentAssetRepositoryTest {
     void shouldHandlePriceChanges() {
         investmentAssetRepository.save(testAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("AAPL").get();
+        InvestmentAsset found = investmentAssetRepository.findById(testAssetId).get();
         BigDecimal originalPrice = found.getCurrentPriceTry();
 
         found.setCurrentPriceTry(BigDecimal.valueOf(250));
         investmentAssetRepository.save(found);
 
-        InvestmentAsset updated = investmentAssetRepository.findById("AAPL").get();
+        InvestmentAsset updated = investmentAssetRepository.findById(testAssetId).get();
         assertThat(updated.getCurrentPriceTry()).isNotEqualByComparingTo(originalPrice);
         assertThat(updated.getCurrentPriceTry()).isEqualByComparingTo(BigDecimal.valueOf(250));
     }
 
     @Test
-    void shouldPreserveSymbolKeyAfterUpdate() {
-        investmentAssetRepository.save(testAsset);
-        String originalSymbol = testAsset.getSymbol();
-
-        testAsset.setCurrentPriceTry(BigDecimal.valueOf(250));
-        investmentAssetRepository.save(testAsset);
-
-        InvestmentAsset updated = investmentAssetRepository.findById(originalSymbol).get();
-        assertThat(updated.getSymbol()).isEqualTo(originalSymbol);
-    }
-
-    @Test
     void shouldHandleDecimalPriceValues() {
+        UUID decimalAssetId = UUID.randomUUID();
         InvestmentAsset decimalAsset = InvestmentAsset.builder()
+                .id(decimalAssetId)
                 .symbol("DECIMAL")
                 .name("Decimal Price Stock")
                 .quantity(BigDecimal.valueOf(100.50))
@@ -264,7 +267,7 @@ class InvestmentAssetRepositoryTest {
 
         investmentAssetRepository.save(decimalAsset);
 
-        InvestmentAsset found = investmentAssetRepository.findById("DECIMAL").get();
+        InvestmentAsset found = investmentAssetRepository.findById(decimalAssetId).get();
         assertThat(found.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(123.45));
         assertThat(found.getCurrentPriceTry()).isEqualByComparingTo(BigDecimal.valueOf(154.32));
     }

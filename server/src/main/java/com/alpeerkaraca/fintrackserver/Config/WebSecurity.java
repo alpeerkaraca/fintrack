@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import com.alpeerkaraca.fintrackserver.security.JwtSecurityFilter;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 public class WebSecurity {
     private final JwtSecurityFilter jwtSecurityFilter;
 

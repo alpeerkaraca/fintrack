@@ -3,9 +3,18 @@ spring:
     url: jdbc:postgresql://localhost:5432/fintrack_db
     username: fintrack_user
     password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 86400000
+      cache-null-values: false
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
 server:
   port: 8443
@@ -21,3 +30,6 @@ app:
     refresh-expiration: 86400000
     issuer: https://localhost:8443
     audience: https://localhost:3000
+  exchange:
+    api-key: ${EXCHANGE_RATE_API_KEY}
+    api-url: https://api.exchangerate-api.com/v4/latest/
