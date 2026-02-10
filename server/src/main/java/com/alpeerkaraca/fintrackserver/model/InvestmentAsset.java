@@ -1,12 +1,10 @@
 package com.alpeerkaraca.fintrackserver.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "investment_assets")
@@ -15,8 +13,13 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class InvestmentAsset {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
     private String symbol;
 
     @Column(nullable = false)
@@ -36,4 +39,12 @@ public class InvestmentAsset {
 
     @Column(nullable = false)
     private BigDecimal profitLossTry;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AssetType type;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_profile_id", nullable = false)
+    private UserProfile userProfile;
 }
