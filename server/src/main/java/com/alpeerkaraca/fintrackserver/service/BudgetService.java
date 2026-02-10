@@ -1,10 +1,7 @@
 package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.*;
-import com.alpeerkaraca.fintrackserver.model.BudgetCategory;
-import com.alpeerkaraca.fintrackserver.model.PaymentMethod;
-import com.alpeerkaraca.fintrackserver.model.Transaction;
-import com.alpeerkaraca.fintrackserver.model.TransactionType;
+import com.alpeerkaraca.fintrackserver.model.*;
 import com.alpeerkaraca.fintrackserver.repository.BudgetCategoryRepository;
 import com.alpeerkaraca.fintrackserver.repository.BudgetMonthRepository;
 import com.alpeerkaraca.fintrackserver.repository.TransactionRepository;
@@ -18,6 +15,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,49 +31,130 @@ public class BudgetService {
     private static final String LIMIT_DANGER = "danger";
     private static final String LIMIT_WARNING = "warning";
     private static final String LIMIT_NORMAL = "normal";
+
     private final BudgetMonthRepository budgetMonthRepository;
     private final BudgetCategoryRepository budgetCategoryRepository;
     private final TransactionRepository transactionRepository;
     private final UserProfileRepository userProfileRepository;
     private final TransactionService transactionService;
+    private final MarketDataService marketDataService;
+
+    private String generateMonthId(UUID userId, int year, int month) {
+        return userId.toString() + "-" + year + "-" + String.format("%02d", month);
+    }
 
     public BudgetSummaryDto getBudgetSummary(UUID userId, Integer month, Integer year) {
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        BigDecimal usdTryRate = marketDataService.getUsdToTryExchangeRate();
 
-        BigDecimal income = calculateIncomesMonthly(userId, month, year);
-        BigDecimal expense = transactionRepository.sumAmountByUserIdAndMonthAndYearAndType(
-                        userId, month, year, com.alpeerkaraca.fintrackserver.model.TransactionType.EXPENSE)
-                .orElse(BigDecimal.ZERO);
-        BigDecimal savings = income.subtract(expense);
+        String monthId = generateMonthId(userId, year, month);
+        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+
+        BigDecimal totalIncome;
+        BigDecimal totalExpense;
+        BigDecimal savings;
+
+        if (budgetMonthOpt.isPresent()) {
+            BudgetMonth bm = budgetMonthOpt.get();
+            totalIncome = bm.getIncomeTry();
+            totalExpense = bm.getExpenseTry();
+            savings = bm.getNetSavingsTry();
+        } else {
+            UserProfile user = userProfileRepository.findById(userId).orElseThrow();
+            BigDecimal salaryTry = user.getNetSalaryUsd().multiply(usdTryRate);
+            BigDecimal otherIncome = calculateIncomesMonthly(userId, month, year);
+
+            totalIncome = salaryTry.add(otherIncome);
+            totalExpense = calculateExpensesMonthly(userId, month, year);
+            savings = totalIncome.subtract(totalExpense);
+        }
 
         BigDecimal cardExpense = calculateCreditCardUsed(userId, month, year);
-        BigDecimal userLimit = userProfileRepository.findById(userId).get().getCreditCardLimitTry();
-
+        UserProfile userProfile = userProfileRepository.findById(userId).orElseThrow();
+        BigDecimal userLimit = userProfile.getCreditCardLimitTry();
         BigDecimal creditCardRemainingLimit = userLimit.subtract(cardExpense);
 
         return BudgetSummaryDto.builder()
-                .income(income)
-                .expense(expense)
+                .income(totalIncome)
+                .expense(totalExpense)
                 .savings(savings)
                 .creditCardLimit(creditCardRemainingLimit)
+                .usdRate(usdTryRate)
                 .build();
+    }
+
+    public List<ForecastResponse> getBudgetForecast(UUID userId) {
+        List<ForecastResponse> forecastList = new ArrayList<>();
+        YearMonth currentMonth = YearMonth.now();
+
+        for (int i = -3; i <= 3; i++) {
+            YearMonth targetMonth = currentMonth.plusMonths(i);
+            String monthId = generateMonthId(userId, targetMonth.getYear(), targetMonth.getMonthValue());
+
+            Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+
+            BigDecimal savings;
+
+            if (budgetMonthOpt.isPresent()) {
+                savings = budgetMonthOpt.get().getNetSavingsTry();
+            } else {
+                if (targetMonth.isAfter(currentMonth)) {
+                    savings = BigDecimal.ZERO;
+                } else {
+                    BigDecimal income = calculateIncomesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
+                    BigDecimal expense = calculateExpensesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
+                    savings = income.subtract(expense);
+                }
+            }
+
+            forecastList.add(new ForecastResponse(
+                    targetMonth.toString(),
+                    targetMonth.getMonth().name().substring(0, 3),
+                    savings
+            ));
+        }
+        return forecastList;
+    }
+
+    public List<BudgetCategoryResponse> getCategoryWatchlist(UUID userId, Integer month, Integer year) {
+        String monthId = generateMonthId(userId, year, month);
+        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+
+        List<BudgetCategory> categoryList;
+
+        if (budgetMonthOpt.isPresent()) {
+            categoryList = budgetMonthOpt.get().getCategories();
+        } else {
+            categoryList = new ArrayList<>();
+        }
+
+        TransactionFilter filter = new TransactionFilter(month, year, null, null, true);
+        List<TransactionDto> monthlyTransactions = transactionService.getFilteredTransactions(userId, filter);
+
+        return categoryList.stream().map(cat -> {
+            BigDecimal totalSpent = monthlyTransactions.stream()
+                    .filter(t -> t.getCategory() != null && t.getCategory().equalsIgnoreCase(cat.getCategory()))
+                    .map(TransactionDto::getAmountTry)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            return BudgetCategoryResponse.builder()
+                    .category(cat.getCategory())
+                    .limitTry(cat.getLimitTry())
+                    .spentTry(totalSpent)
+                    .alertLevel(calculateLimitStatus(totalSpent, cat.getLimitTry()))
+                    .build();
+        }).toList();
     }
 
     private BigDecimal calculateCreditCardUsed(UUID userId, Integer month, Integer year) {
         YearMonth targetMonth = YearMonth.of(year, month);
-
         List<Transaction> cardTransactions = transactionRepository.findByUserProfileIdAndPaymentMethodAndTransactionType(
                 userId, PaymentMethod.CARD, TransactionType.EXPENSE);
         return cardTransactions.stream()
                 .map(t -> {
                     if (!Boolean.TRUE.equals(t.getIsInstallment())) {
-                        if (YearMonth.from(t.getDate()).equals(targetMonth)) {
-                            return t.getAmountTry();
-                        }
+                        if (YearMonth.from(t.getDate()).equals(targetMonth)) return t.getAmountTry();
                         return BigDecimal.ZERO;
                     }
-
                     if (t.getInstallmentMeta() != null) {
                         YearMonth start = YearMonth.parse(t.getInstallmentMeta().getStartMonth());
                         YearMonth end = start.plusMonths(t.getInstallmentMeta().getMonths() - 1);
@@ -88,86 +167,45 @@ public class BudgetService {
                 }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public List<ForecastResponse> getBudgetForecast(UUID userId) {
-        List<ForecastResponse> forecastList = new ArrayList<>();
-        YearMonth currentMonth = YearMonth.now();
-
-        for (int i = -3; i <= 3; i++) {
-            YearMonth targetMonth = currentMonth.plusMonths(i);
-
-            BigDecimal income = calculateIncomesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
-            BigDecimal expense = calculateExpensesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
-            BigDecimal savings = income.subtract(expense);
-            forecastList.add(new ForecastResponse(
-                    targetMonth.toString(), targetMonth.getMonth().name().substring(0, 3),
-                    savings
-            ));
-        }
-        return forecastList;
-    }
-
-    public String getBudgetAlerts(UUID userId) {
-        BigDecimal income = calculateIncomesMonthly(userId, LocalDate.now().getMonthValue(), LocalDate.now().getYear());
-        BigDecimal expense = calculateExpensesMonthly(userId, LocalDate.now().getMonthValue(), LocalDate.now().getYear());
-        return getAlertStatus(income, expense);
-    }
-
-    public List<BudgetCategoryResponse> getCategoryWatchlist(UUID userId, Integer month, Integer year) {
-        List<BudgetCategory> categoryLimitList = budgetCategoryRepository.findByUserId(userId);
-        TransactionFilter filter = new TransactionFilter(month, year, null, null, true);
-        List<TransactionDto> monthlyTransactions = transactionService.getFilteredTransactions(userId, filter);
-
-        return categoryLimitList.stream().map(limit -> {
-            BigDecimal totalSpent = monthlyTransactions.stream()
-                    .filter(t -> t.getCategory() != null && t.getCategory().equalsIgnoreCase(limit.getCategory()))
-                    .map(TransactionDto::getAmountTry)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            return BudgetCategoryResponse.builder()
-                    .category(limit.getCategory())
-                    .limitTry(limit.getLimitTry())
-                    .spentTry(totalSpent)
-                    .alertLevel(calculateLimitStatus(totalSpent, limit.getLimitTry()))
-                    .build();
-        }).toList();
-    }
-
     private BigDecimal calculateIncomesMonthly(UUID userId, Integer month, Integer year) {
+        YearMonth targetMonth = YearMonth.of(year, month);
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = LocalDate.of(year, month, targetMonth.lengthOfMonth());
         return transactionRepository.sumAmountByUserIdAndMonthAndYearAndType(
-                        userId, month, year, com.alpeerkaraca.fintrackserver.model.TransactionType.INCOME)
+                        userId, startDate, endDate, com.alpeerkaraca.fintrackserver.model.TransactionType.INCOME)
                 .orElse(BigDecimal.ZERO);
     }
 
     private BigDecimal calculateExpensesMonthly(UUID userId, Integer month, Integer year) {
-
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = LocalDate.of(year, month, YearMonth.of(year, month).lengthOfMonth());
         BigDecimal nonInstallmentExpenses = transactionRepository.sumAmountByUserIdAndMonthAndYearAndType(
-                        userId, month, year, com.alpeerkaraca.fintrackserver.model.TransactionType.EXPENSE)
+                        userId, startDate, endDate, com.alpeerkaraca.fintrackserver.model.TransactionType.EXPENSE)
                 .orElse(BigDecimal.ZERO);
-
         BigDecimal installmentExpenses = calculateInstallmentExpenses(userId, month, year);
-
         return nonInstallmentExpenses.add(installmentExpenses);
-
-
     }
 
     private BigDecimal calculateInstallmentExpenses(UUID userId, Integer month, Integer year) {
         List<Transaction> cardTransactions = transactionRepository.findByUserProfileIdAndPaymentMethodAndTransactionType(
                 userId, PaymentMethod.CARD, TransactionType.EXPENSE);
         YearMonth targetMonth = YearMonth.of(year, month);
-
         return cardTransactions.stream()
-                .filter(t -> Boolean.TRUE.equals(t.getIsInstallment())
-                        && t.getInstallmentMeta() != null)
+                .filter(t -> Boolean.TRUE.equals(t.getIsInstallment()) && t.getInstallmentMeta() != null)
                 .map(t -> {
                     YearMonth start = YearMonth.parse(t.getInstallmentMeta().getStartMonth());
                     YearMonth end = start.plusMonths(t.getInstallmentMeta().getMonths() - 1);
-                    if (targetMonth.isBefore(start) || targetMonth.isAfter(end)) {
-                        return BigDecimal.ZERO;
-                    }
+                    if (targetMonth.isBefore(start) || targetMonth.isAfter(end)) return BigDecimal.ZERO;
                     return t.getInstallmentMeta().getTotalTry()
                             .divide(BigDecimal.valueOf(t.getInstallmentMeta().getMonths()), 2, RoundingMode.HALF_UP);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public String getBudgetAlerts(UUID userId) {
+        BigDecimal income = calculateIncomesMonthly(userId, LocalDate.now().getMonthValue(), LocalDate.now().getYear());
+        BigDecimal expense = calculateExpensesMonthly(userId, LocalDate.now().getMonthValue(), LocalDate.now().getYear());
+        return getAlertStatus(income, expense);
     }
 
     private String getAlertStatus(BigDecimal income, BigDecimal expense) {
@@ -181,7 +219,6 @@ public class BudgetService {
     private String calculateLimitStatus(BigDecimal totalSpent, BigDecimal limitTry) {
         if (limitTry.compareTo(BigDecimal.ZERO) == 0) return LIMIT_NORMAL;
         double ratio = totalSpent.divide(limitTry, 2, RoundingMode.HALF_UP).doubleValue();
-
         if (ratio >= Double.parseDouble(LIMIT_DANGER_THRESHOLD)) return LIMIT_DANGER;
         if (ratio >= Double.parseDouble(LIMIT_WARNING_THRESHOLD)) return LIMIT_WARNING;
         return LIMIT_NORMAL;

@@ -16,4 +16,5 @@ public class BudgetSummaryDto {
     private BigDecimal expense;
     private BigDecimal savings;
     private BigDecimal creditCardLimit;
+    private BigDecimal usdRate;
 }
