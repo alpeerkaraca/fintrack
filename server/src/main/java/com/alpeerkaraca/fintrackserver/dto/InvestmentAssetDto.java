@@ -29,7 +29,7 @@ public class InvestmentAssetDto {
 
     @NotNull
     @Min(value = 0, message = "quantity must be non-negative")
-    private Integer quantity;
+    private BigDecimal quantity;
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = true, message = "avgCostTry must be non-negative")

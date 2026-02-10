@@ -49,14 +49,12 @@ public class TransactionSpecifications {
             }
 
             if (filter.getMonth() != null && filter.getYear() != null) {
-                // Hedeflenen ayın başlangıç ve bitiş tarihlerini hesapla
                 LocalDate targetStart = LocalDate.of(filter.getYear(), filter.getMonth(), 1);
                 LocalDate targetEnd = targetStart.withDayOfMonth(targetStart.lengthOfMonth());
 
                 Predicate normalTransactions = cb.and(
-                        cb.equal(cb.function("MONTH", Integer.class, root.get("date")), filter.getMonth()),
-                        cb.equal(cb.function("YEAR", Integer.class, root.get("date")), filter.getYear()),
-                        cb.isFalse(root.get("isInstallment")) // Taksitli olmayanlar
+                        cb.between(root.get("date"), targetStart, targetEnd),
+                        cb.isFalse(root.get("isInstallment"))
                 );
 
                 if (filter.isExpanded()) {

@@ -4,6 +4,10 @@ import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.UUID;
+
 @Repository
-public interface InvestmentAssetRepository extends JpaRepository<InvestmentAsset, String> {
+public interface InvestmentAssetRepository extends JpaRepository<InvestmentAsset, UUID> {
+    List<InvestmentAsset> findByUserProfileId(UUID userProfileId);
 }
