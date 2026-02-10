@@ -16,6 +16,7 @@ services:
       - "8443:8443"
     depends_on:
       - postgres
+      - valkey
   
   postgres:
     image: postgres:18-alpine
@@ -30,5 +31,16 @@ services:
     volumes:
       - fintrack-data:/var/lib/postgresql
 
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    container_name: fintrack-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - fintrack-valkey-data:/data
+    command: redis-server --appendonly yes
+
 volumes:
   fintrack-data:
+  fintrack-valkey-data:
