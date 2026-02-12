@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.ExchangeRateResponse;
 import com.alpeerkaraca.fintrackserver.dto.FundResponse;
+import com.alpeerkaraca.fintrackserver.exception.MarketDataFetchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -26,7 +27,7 @@ public class MarketDataService {
     @Value("${app.exchange.api-key}")
     private String exchangeApiKey;
 
-    @Cacheable(value = "marketData", key = "'usdTryRate'")
+    @Cacheable(value = "exchangeRates", key = "'USD_TRY'")
     public BigDecimal getUsdToTryExchangeRate() {
         try {
             String url = URL.replace("API_URL", exchangeApiKey);
@@ -36,48 +37,73 @@ public class MarketDataService {
                     && response.conversion_rate() != null) {
                 return response.conversion_rate();
             }
+            throw new MarketDataFetchException("Invalid response from exchange rate API");
+        } catch (MarketDataFetchException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error fetching exchange rate: {}", e.getMessage());
+            throw new MarketDataFetchException("Failed to fetch USD to TRY exchange rate", e);
         }
-        return new BigDecimal("123.45"); // Default fallback value
     }
 
-    @Cacheable(value = "marketData", key = "#metalName")
+    @Cacheable(value = "metalPrices", key = "#metalName.toLowerCase()")
     public BigDecimal getMetalPrice(String metalName) {
         try {
             String url = "https://bloomberght.com/" + metalName;
             Document doc = Jsoup.connect(url).get();
-            String priceText = doc
+            Element priceElement = doc
                     .select("[class^=security-] span")
-                    .first()
-                    .text()
-                    .replace(".", "");
+                    .first();
+            
+            if (priceElement == null) {
+                throw new MarketDataFetchException("Price element not found for metal: " + metalName);
+            }
+            
+            String priceText = priceElement.text().replace(".", "");
             return new BigDecimal(priceText.replace(",", "."));
+        } catch (MarketDataFetchException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new MarketDataFetchException("Failed to fetch metal price for: " + metalName, e);
         }
     }
 
 
-    @Cacheable(value = "marketData", key = "#fundCode")
+    @Cacheable(value = "fundPrices", key = "#fundCode.toUpperCase()")
     public BigDecimal getFundPrice(String fundCode) {
         try {
             String url = "https://api.fundfy.net/api/v1/fund/detail/" + fundCode;
             FundResponse response = restTemplate.getForObject(url, FundResponse.class);
 
             if (response == null || response.price() == null) {
-                throw new RuntimeException("Invalid response from fundfy API");
+                throw new MarketDataFetchException("Invalid response from fundfy API for fund: " + fundCode);
             }
 
             return response.price();
-
-
-
+        } catch (MarketDataFetchException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error fetching fund price: {}", e.getMessage());
+            log.error("Error fetching fund price for {}: {}", fundCode, e.getMessage());
+            throw new MarketDataFetchException("Failed to fetch fund price for: " + fundCode, e);
         }
-        return BigDecimal.ZERO;
     }
 
 
+    @Scheduled(cron = "0 5 0 * * *", zone = "Europe/Istanbul")
+    @CacheEvict(cacheNames = "exchangeRates", key = "'USD_TRY'")
+    public void evictExchangeNightly() {
+        log.info("Evicted exchangeRates:USD_TRY at {}", LocalDateTime.now());
+    }
+
+    @Scheduled(cron = "0 5 10 * * *", zone = "Europe/Istanbul")
+    @CacheEvict(value = "fundPrices", allEntries = true)
+    public void evictFundsDaily() {
+        log.info("Evicted all fundPrices at {}", LocalDateTime.now());
+    }
+
+    @Scheduled(cron = "0 */5 * * * *", zone = "Europe/Istanbul")
+    @CacheEvict(value = "metalPrices", allEntries = true)
+    public void evictMetalsEvery5Minutes() {
+        log.info("Evicted all metalPrices at {}", LocalDateTime.now());
+    }
 }
