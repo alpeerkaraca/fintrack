@@ -25,11 +25,14 @@ public class CacheConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType("com.alpeerkaraca.fintrackserver.")
+                .allowIfBaseType("java.util.")
+                .allowIfBaseType("java.math.")
+                .allowIfBaseType("java.time.")
                 .allowIfSubType("com.alpeerkaraca.fintrackserver.")
                 .allowIfSubType("java.time.")
                 .allowIfSubType("java.math.")
                 .allowIfSubType("java.util.")
-                .allowIfSubType("org.springframework.data.")
                 .build();
 
 

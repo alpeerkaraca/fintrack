@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   CreditCard,
@@ -15,14 +15,15 @@ import {
 } from "lucide-react";
 
 import {
-  BASE_TRANSACTIONS,
-  expandInstallments,
   formatCurrency,
   type PaymentMethod,
   type Transaction,
   type TransactionType,
 } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
+import { authFetch } from "@/lib/auth";
+import { parseApiResponse } from "@/lib/api";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
 const CATEGORIES = [
   "Housing",
@@ -45,11 +46,22 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 ];
 
 export default function BudgetEntryClient() {
-  const [transactions, setTransactions] = useState<Transaction[]>(() =>
-    expandInstallments(BASE_TRANSACTIONS),
-  );
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedMonth, setSelectedMonth] = useState("2026-02");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [modal, setModal] = useState<
+    | {
+        type: "success" | "error";
+        title: string;
+        message: string;
+      }
+    | null
+  >(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -59,12 +71,26 @@ export default function BudgetEntryClient() {
     type: "expense" as TransactionType,
     paymentMethod: "card" as PaymentMethod,
     isInstallment: false,
-    installmentMonths: "1",
+    installmentMonths: "2",
   });
 
-  const monthlyTransactions = transactions
-    .filter((t) => t.date.startsWith(selectedMonth))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const openModal = (type: "success" | "error", message: string, title?: string) => {
+    setModal({
+      type,
+      title: title ?? (type === "success" ? "Success" : "Something went wrong"),
+      message,
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    window.setTimeout(() => setModal(null), 200);
+  };
+
+  const monthlyTransactions = [...transactions].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
 
   const monthOptions = [
     { value: "2026-02", label: "Feb 2026" },
@@ -74,53 +100,128 @@ export default function BudgetEntryClient() {
     { value: "2026-06", label: "Jun 2026" },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const loadTransactions = async (monthKey: string) => {
+    const [year, month] = monthKey.split("-");
+    const query = new URLSearchParams({
+      month: String(Number(month)),
+      year,
+      page: "0",
+      size: "15",
+      expanded: "true",
+    });
+
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const response = await authFetch(`/api/v1/transactions?${query.toString()}`);
+
+      const payload = await parseApiResponse<{ content?: Transaction[] }>(
+        response,
+      );
+      setTransactions(payload.content ?? []);
+    } catch (err) {
+      setLoadError(
+        err instanceof Error ? err.message : "Unable to load transactions.",
+      );
+      setTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTransactions(selectedMonth);
+  }, [selectedMonth]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     const amount = Number.parseFloat(formData.amountTry);
     if (Number.isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount");
+      openModal("error", "Please enter a valid amount.");
       return;
     }
 
-    const newTransaction: Transaction = {
-      id: `custom-${Date.now()}`,
+    const isExpense = formData.type === "expense";
+    const installmentMonths = Number.parseInt(formData.installmentMonths, 10);
+    if (isExpense && formData.isInstallment && installmentMonths < 2) {
+      openModal("error", "Installments must be at least 2 months.");
+      return;
+    }
+
+    const payload = {
       title: formData.title.trim() || "Untitled Transaction",
       amountTry: amount,
       date: formData.date,
-      category: formData.category,
+      category: isExpense ? formData.category : "Other",
       type: formData.type,
-      paymentMethod: formData.paymentMethod,
-      isInstallment: formData.isInstallment,
-      installmentMeta: formData.isInstallment
-        ? {
-            totalTry: amount,
-            months: Number.parseInt(formData.installmentMonths, 10),
-            startMonth: formData.date.slice(0, 7),
-          }
-        : undefined,
+      paymentMethod: isExpense ? formData.paymentMethod : "transfer",
+      isInstallment: isExpense ? formData.isInstallment : false,
+      installmentMeta:
+        isExpense && formData.isInstallment
+          ? {
+              totalTry: amount,
+              months: installmentMonths,
+              startMonth: formData.date.slice(0, 7),
+            }
+          : undefined,
     };
 
-    setTransactions((prev) => {
-      const updated = [...prev, newTransaction];
-      return formData.isInstallment ? expandInstallments(updated) : updated;
-    });
+    setIsSubmitting(true);
+    try {
+      const response = await authFetch("/api/v1/transactions", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
-    setFormData({
-      title: "",
-      amountTry: "",
-      date: new Date().toISOString().split("T")[0],
-      category: "Food",
-      type: "expense",
-      paymentMethod: "card",
-      isInstallment: false,
-      installmentMonths: "1",
-    });
-    setIsFormOpen(false);
+      const created = await parseApiResponse<Partial<Transaction>>(response);
+
+      const newTransaction: Transaction = {
+        id: created.id ?? `custom-${Date.now()}`,
+        title: created.title ?? payload.title,
+        amountTry: Number(created.amountTry ?? payload.amountTry),
+        date: created.date ?? payload.date,
+        category: created.category ?? payload.category,
+        type: (created.type ?? payload.type) as TransactionType,
+        paymentMethod: (created.paymentMethod ?? payload.paymentMethod) as PaymentMethod,
+        isInstallment: created.isInstallment ?? payload.isInstallment,
+        installmentMeta: created.installmentMeta ?? payload.installmentMeta,
+      };
+
+      setTransactions((prev) => [...prev, newTransaction]);
+
+      setFormData({
+        title: "",
+        amountTry: "",
+        date: new Date().toISOString().split("T")[0],
+        category: "Food",
+        type: "expense",
+        paymentMethod: "card",
+        isInstallment: false,
+        installmentMonths: "2",
+      });
+      setIsFormOpen(false);
+      loadTransactions(selectedMonth);
+      openModal("success", `${newTransaction.title} added.`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to save transaction.";
+      setSubmitError(message);
+      openModal("error", message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (id: string) => {
+    const transaction = transactions.find((item) => item.id === id);
     setTransactions((prev) => prev.filter((t) => t.id !== id));
+    openModal(
+      "success",
+      `${transaction?.title ?? "Transaction"} removed.`,
+    );
   };
 
   const totalIncome = monthlyTransactions
@@ -298,29 +399,31 @@ export default function BudgetEntryClient() {
                   />
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="category"
-                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
-                  >
-                    <Tag className="h-3.5 w-3.5" />
-                    Category
-                  </label>
-                  <select
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {formData.type === "expense" && (
+                  <div>
+                    <label
+                      htmlFor="category"
+                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
+                    >
+                      <Tag className="h-3.5 w-3.5" />
+                      Category
+                    </label>
+                    <select
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData({ ...formData, category: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
@@ -330,7 +433,10 @@ export default function BudgetEntryClient() {
                     <button
                       type="button"
                       onClick={() =>
-                        setFormData({ ...formData, type: "expense" })
+                        setFormData((prev) => ({
+                          ...prev,
+                          type: "expense",
+                        }))
                       }
                       className={cn(
                         "flex-1 rounded-xl border px-4 py-2.5 text-sm transition",
@@ -343,7 +449,16 @@ export default function BudgetEntryClient() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, type: "income" })}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          type: "income",
+                          category: "Other",
+                          paymentMethod: "transfer",
+                          isInstallment: false,
+                          installmentMonths: "2",
+                        }))
+                      }
                       className={cn(
                         "flex-1 rounded-xl border px-4 py-2.5 text-sm transition",
                         formData.type === "income"
@@ -356,84 +471,93 @@ export default function BudgetEntryClient() {
                   </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="payment"
-                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
-                  >
-                    <CreditCard className="h-3.5 w-3.5" />
-                    Payment Method
-                  </label>
-                  <select
-                    id="payment"
-                    value={formData.paymentMethod}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        paymentMethod: e.target.value as PaymentMethod,
-                      })
-                    }
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    {PAYMENT_METHODS.map((method) => (
-                      <option key={method.value} value={method.value}>
-                        {method.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-background/60 p-4">
-                <div className="flex items-center gap-3">
-                  <input
-                    id="installment"
-                    type="checkbox"
-                    checked={formData.isInstallment}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        isInstallment: e.target.checked,
-                      })
-                    }
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <label htmlFor="installment" className="text-sm">
-                    This is an installment payment
-                  </label>
-                </div>
-                {formData.isInstallment && (
-                  <div className="mt-3">
+                {formData.type === "expense" && (
+                  <div>
                     <label
-                      htmlFor="months"
-                      className="mb-2 block text-xs text-muted-foreground"
+                      htmlFor="payment"
+                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
                     >
-                      Number of Months
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Payment Method
                     </label>
-                    <input
-                      id="months"
-                      type="number"
-                      min="1"
-                      max="60"
-                      value={formData.installmentMonths}
+                    <select
+                      id="payment"
+                      value={formData.paymentMethod}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          installmentMonths: e.target.value,
+                          paymentMethod: e.target.value as PaymentMethod,
                         })
                       }
-                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:w-48"
-                    />
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      {PAYMENT_METHODS.map((method) => (
+                        <option key={method.value} value={method.value}>
+                          {method.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>
 
+              {formData.type === "expense" && (
+                <div className="rounded-xl border border-border bg-background/60 p-4">
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="installment"
+                      type="checkbox"
+                      checked={formData.isInstallment}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isInstallment: e.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 rounded border-border"
+                    />
+                    <label htmlFor="installment" className="text-sm">
+                      This is an installment payment
+                    </label>
+                  </div>
+                  {formData.isInstallment && (
+                    <div className="mt-3">
+                      <label
+                        htmlFor="months"
+                        className="mb-2 block text-xs text-muted-foreground"
+                      >
+                        Number of Months
+                      </label>
+                      <input
+                        id="months"
+                        type="number"
+                        min="2"
+                        max="60"
+                        value={formData.installmentMonths}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            installmentMonths: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:w-48"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {submitError && (
+                <p className="text-sm text-rose-400">{submitError}</p>
+              )}
+
               <div className="flex gap-3">
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
                 >
-                  Add Transaction
+                  {isSubmitting ? "Saving..." : "Add Transaction"}
                 </button>
                 <button
                   type="button"
@@ -462,7 +586,15 @@ export default function BudgetEntryClient() {
             </span>
           </div>
 
-          {monthlyTransactions.length === 0 ? (
+          {loadError && (
+            <p className="mb-4 text-sm text-rose-400">{loadError}</p>
+          )}
+
+          {isLoading ? (
+            <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
+              <p className="text-sm text-muted-foreground">Loading transactions...</p>
+            </div>
+          ) : monthlyTransactions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
               <p className="text-sm text-muted-foreground">
                 No transactions found for this month
@@ -537,6 +669,15 @@ export default function BudgetEntryClient() {
             </div>
           )}
         </div>
+        {modal && (
+          <FeedbackModal
+            open={modalOpen}
+            type={modal.type}
+            title={modal.title}
+            message={modal.message}
+            onClose={closeModal}
+          />
+        )}
       </div>
     </>
   );

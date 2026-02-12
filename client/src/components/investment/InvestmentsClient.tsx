@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Edit2,
+  Lock,
   Plus,
   TrendingDown,
   TrendingUp,
@@ -18,78 +19,122 @@ import {
 } from "recharts";
 
 import { formatCurrency, formatNumber, type InvestmentAsset } from "@/lib/fintrack";
+import { authFetch } from "@/lib/auth";
+import { parseApiResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import FeedbackModal from "@/components/ui/FeedbackModal";
 
-const INITIAL_ASSETS: InvestmentAsset[] = [
-  {
-    symbol: "GUM",
-    name: "Gumruk Tech Fund",
-    quantity: 280,
-    avgCostTry: 96.4,
-    currentPriceTry: 102.3,
-    changePercent: 2.1,
-    profitLossTry: 0,
-  },
-  {
-    symbol: "IJC",
-    name: "Istanbul Growth",
-    quantity: 140,
-    avgCostTry: 182.7,
-    currentPriceTry: 176.8,
-    changePercent: -1.4,
-    profitLossTry: 0,
-  },
-  {
-    symbol: "TGE",
-    name: "Tech Global Equity",
-    quantity: 90,
-    avgCostTry: 244.2,
-    currentPriceTry: 262.5,
-    changePercent: 3.3,
-    profitLossTry: 0,
-  },
-];
+type InvestmentAssetWithType = InvestmentAsset & {
+  id?: string;
+  assetType?: string;
+};
+
+type SupportedAssetOption = {
+  slug: string;
+  label: string;
+};
+
+type SupportedAssets = Partial<
+  Record<"CURRENCY" | "GOLD_SILVER" | "FUND" | "STOCK", SupportedAssetOption[]>
+>;
 
 const CHART_COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
-const updateProfitLoss = (assets: InvestmentAsset[]) =>
-  assets.map((asset) => ({
-    ...asset,
-    profitLossTry: (asset.currentPriceTry - asset.avgCostTry) * asset.quantity,
-  }));
-
 export default function InvestmentsClient() {
-  const [assets, setAssets] = useState(() => updateProfitLoss(INITIAL_ASSETS));
+  const [assets, setAssets] = useState<InvestmentAssetWithType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modal, setModal] = useState<
+    | {
+        type: "success" | "error";
+        title: string;
+        message: string;
+      }
+    | null
+  >(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [supportedAssets, setSupportedAssets] = useState<SupportedAssets>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<InvestmentAsset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<InvestmentAssetWithType | null>(null);
+  const [confirmAsset, setConfirmAsset] = useState<InvestmentAssetWithType | null>(null);
 
   const [formData, setFormData] = useState({
+    assetType: "FUND",
     symbol: "",
-    name: "",
     quantity: "",
     avgCostTry: "",
   });
+  const isEditing = Boolean(editingAsset);
+
+  const openModal = (type: "success" | "error", message: string, title?: string) => {
+    setModal({
+      type,
+      title: title ?? (type === "success" ? "Success" : "Something went wrong"),
+      message,
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    window.setTimeout(() => setModal(null), 200);
+  };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAssets((prev) =>
-        updateProfitLoss(
-          prev.map((asset) => {
-            const variance = (Math.random() - 0.45) * 1.8;
-            const nextPrice = Math.max(40, asset.currentPriceTry + variance);
-            return {
-              ...asset,
-              currentPriceTry: Number(nextPrice.toFixed(2)),
-              changePercent: Number(
-                ((variance / asset.currentPriceTry) * 100).toFixed(2),
-              ),
-            };
-          }),
-        ),
-      );
-    }, 2200);
+    let isActive = true;
 
-    return () => clearInterval(interval);
+    const loadInvestments = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await authFetch("/api/v1/investments");
+        const payload = await parseApiResponse<InvestmentAssetWithType[]>(response);
+        if (isActive) {
+          setAssets(payload ?? []);
+        }
+      } catch (requestError) {
+        if (isActive) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Investments could not be loaded.",
+          );
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInvestments();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSupportedAssets = async () => {
+      try {
+        const response = await authFetch("/api/v1/market-data/supported-assets");
+        const payload = await parseApiResponse<SupportedAssets>(response);
+        if (isActive) {
+          setSupportedAssets(payload ?? {});
+        }
+      } catch {
+        if (isActive) {
+          setSupportedAssets({});
+        }
+      }
+    };
+
+    loadSupportedAssets();
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const totalInvested = assets.reduce(
@@ -111,20 +156,20 @@ export default function InvestmentsClient() {
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
-  const handleOpenForm = (asset?: InvestmentAsset) => {
+  const handleOpenForm = (asset?: InvestmentAssetWithType) => {
     if (asset) {
       setEditingAsset(asset);
       setFormData({
+        assetType: asset.assetType ?? "FUND",
         symbol: asset.symbol,
-        name: asset.name,
         quantity: asset.quantity.toString(),
         avgCostTry: asset.avgCostTry.toString(),
       });
     } else {
       setEditingAsset(null);
       setFormData({
+        assetType: "FUND",
         symbol: "",
-        name: "",
         quantity: "",
         avgCostTry: "",
       });
@@ -136,14 +181,14 @@ export default function InvestmentsClient() {
     setIsFormOpen(false);
     setEditingAsset(null);
     setFormData({
+      assetType: "FUND",
       symbol: "",
-      name: "",
       quantity: "",
       avgCostTry: "",
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const quantity = Number.parseFloat(formData.quantity);
@@ -152,49 +197,107 @@ export default function InvestmentsClient() {
     if (
       !formData.symbol.trim() ||
       Number.isNaN(quantity) ||
-      quantity <= 0 ||
+      quantity < 0 ||
       Number.isNaN(avgCost) ||
-      avgCost <= 0
+      avgCost < 0
     ) {
-      alert("Please fill all fields with valid values");
+      openModal("error", "Please fill all fields with valid values.");
       return;
     }
 
     if (editingAsset) {
-      setAssets((prev) =>
-        updateProfitLoss(
-          prev.map((asset) =>
-            asset.symbol === editingAsset.symbol
-              ? {
-                  ...asset,
-                  symbol: formData.symbol.trim().toUpperCase(),
-                  name: formData.name.trim() || formData.symbol.trim().toUpperCase(),
-                  quantity,
-                  avgCostTry: avgCost,
-                }
-              : asset,
-          ),
-        ),
-      );
-    } else {
-      const newAsset: InvestmentAsset = {
-        symbol: formData.symbol.trim().toUpperCase(),
-        name: formData.name.trim() || formData.symbol.trim().toUpperCase(),
-        quantity,
-        avgCostTry: avgCost,
-        currentPriceTry: avgCost,
-        changePercent: 0,
-        profitLossTry: 0,
-      };
-      setAssets((prev) => updateProfitLoss([...prev, newAsset]));
+      if (!editingAsset.id) {
+        openModal("error", "Unable to update asset without an id.");
+        return;
+      }
+
+      try {
+        const response = await authFetch(`/api/v1/investments/${editingAsset.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            quantity,
+            avgCostTry: avgCost,
+          }),
+        });
+
+        const updated = await parseApiResponse<InvestmentAssetWithType>(response);
+        setAssets((prev) =>
+          prev.map((asset) => (asset.id === updated.id ? updated : asset)),
+        );
+        handleCloseForm();
+        openModal("success", `${updated.symbol} updated.`);
+      } catch (requestError) {
+        openModal(
+          "error",
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to update asset.",
+        );
+      }
+      return;
     }
 
-    handleCloseForm();
+    try {
+      const response = await authFetch("/api/v1/investments", {
+        method: "POST",
+        body: JSON.stringify({
+          symbol: formData.symbol.trim(),
+          quantity,
+          avgCostTry: avgCost,
+          assetType: formData.assetType,
+        }),
+      });
+
+      const created = await parseApiResponse<InvestmentAssetWithType>(response);
+      setAssets((prev) => [...prev, created]);
+      handleCloseForm();
+      openModal("success", `${created.symbol} added.`);
+    } catch (requestError) {
+      openModal(
+        "error",
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to add asset.",
+      );
+      return;
+    }
   };
 
-  const handleDelete = (symbol: string) => {
-    if (confirm(`Are you sure you want to remove ${symbol} from your portfolio?`)) {
-      setAssets((prev) => prev.filter((asset) => asset.symbol !== symbol));
+  const handleDeleteRequest = (asset: InvestmentAssetWithType) => {
+    if (!asset.id) {
+      openModal("error", "Unable to delete asset without an id.");
+      return;
+    }
+
+    setConfirmAsset(asset);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmAsset?.id) {
+      setConfirmAsset(null);
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/v1/investments/${confirmAsset.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.status !== 204) {
+        await parseApiResponse<null>(response);
+      }
+
+      setAssets((prev) => prev.filter((item) => item.id !== confirmAsset.id));
+      openModal("success", `${confirmAsset.symbol} deleted.`);
+    } catch (requestError) {
+      openModal(
+        "error",
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to delete asset.",
+      );
+    } finally {
+      setConfirmAsset(null);
     }
   };
 
@@ -221,6 +324,14 @@ export default function InvestmentsClient() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+        {error && (
+          <p className="mb-4 text-sm text-rose-400">{error}</p>
+        )}
+        {isLoading && (
+          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
+            <p className="text-sm text-muted-foreground">Loading portfolio...</p>
+          </div>
+        )}
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card/70 p-5">
             <p className="text-xs text-muted-foreground">Total Invested</p>
@@ -406,7 +517,7 @@ export default function InvestmentsClient() {
               <div className="space-y-4">
                 {assets.map((asset) => (
                   <div
-                    key={asset.symbol}
+                    key={asset.id ?? asset.symbol}
                     className="rounded-xl border border-border bg-background/60 p-4 transition hover:bg-muted/30"
                   >
                     <div className="flex items-start justify-between">
@@ -477,7 +588,7 @@ export default function InvestmentsClient() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(asset.symbol)}
+                          onClick={() => handleDeleteRequest(asset)}
                           className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
                         >
                           <X className="h-4 w-4" />
@@ -510,41 +621,82 @@ export default function InvestmentsClient() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label
-                    htmlFor="symbol"
-                    className="mb-2 block text-xs text-muted-foreground"
+                    htmlFor="assetType"
+                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
                   >
-                    Symbol / Ticker
+                    Asset Type
+                    {isEditing && <Lock className="h-3.5 w-3.5" />}
                   </label>
-                  <input
-                    id="symbol"
-                    type="text"
-                    value={formData.symbol}
+                  <select
+                    id="assetType"
+                    value={formData.assetType}
                     onChange={(e) =>
-                      setFormData({ ...formData, symbol: e.target.value })
+                      setFormData((prev) => ({
+                        ...prev,
+                        assetType: e.target.value,
+                        symbol: "",
+                      }))
                     }
-                    placeholder="e.g., GUM, IJC"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm uppercase transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    required
-                  />
+                    disabled={isEditing}
+                    className={cn(
+                      "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      isEditing && "cursor-not-allowed opacity-60",
+                    )}
+                  >
+                    <option value="FUND">Fund</option>
+                    <option value="STOCK">Stock</option>
+                    <option value="GOLD_SILVER">Gold & Silver</option>
+                    <option value="CURRENCY">Currency</option>
+                  </select>
                 </div>
 
                 <div>
                   <label
-                    htmlFor="name"
-                    className="mb-2 block text-xs text-muted-foreground"
+                    htmlFor="symbol"
+                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
                   >
-                    Fund Name (Optional)
+                    Symbol
+                    {isEditing && <Lock className="h-3.5 w-3.5" />}
                   </label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g., Gumruk Tech Fund"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
+                  {formData.assetType === "GOLD_SILVER" ||
+                  formData.assetType === "CURRENCY" ? (
+                    <select
+                      id="symbol"
+                      value={formData.symbol}
+                      onChange={(e) =>
+                        setFormData({ ...formData, symbol: e.target.value })
+                      }
+                      disabled={isEditing}
+                      className={cn(
+                        "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                        isEditing && "cursor-not-allowed opacity-60",
+                      )}
+                      required
+                    >
+                      <option value="">Select an asset</option>
+                      {(supportedAssets[formData.assetType] ?? []).map((asset) => (
+                        <option key={asset.slug} value={asset.slug}>
+                          {asset.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      id="symbol"
+                      type="text"
+                      value={formData.symbol}
+                      onChange={(e) =>
+                        setFormData({ ...formData, symbol: e.target.value })
+                      }
+                      disabled={isEditing}
+                      placeholder="e.g., TCD, AAPL"
+                      className={cn(
+                        "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm uppercase transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                        isEditing && "cursor-not-allowed opacity-60",
+                      )}
+                      required
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -609,6 +761,27 @@ export default function InvestmentsClient() {
               </form>
             </div>
           </div>
+        )}
+        {modal && (
+          <FeedbackModal
+            open={modalOpen}
+            type={modal.type}
+            title={modal.title}
+            message={modal.message}
+            onClose={closeModal}
+          />
+        )}
+        {confirmAsset && (
+          <FeedbackModal
+            open
+            type="error"
+            title="Confirm delete"
+            message={`Delete ${confirmAsset.symbol} from your portfolio? This action cannot be undone.`}
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+            onConfirm={handleConfirmDelete}
+            onClose={() => setConfirmAsset(null)}
+          />
         )}
       </div>
     </>
