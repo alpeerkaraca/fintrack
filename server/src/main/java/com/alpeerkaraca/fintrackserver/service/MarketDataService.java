@@ -2,6 +2,8 @@ package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.ExchangeRateResponse;
 import com.alpeerkaraca.fintrackserver.dto.FundResponse;
+import com.alpeerkaraca.fintrackserver.dto.InvestmentExternalDto;
+import com.alpeerkaraca.fintrackserver.exception.AssetNotFoundException;
 import com.alpeerkaraca.fintrackserver.exception.MarketDataFetchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -28,14 +31,14 @@ public class MarketDataService {
     private String exchangeApiKey;
 
     @Cacheable(value = "exchangeRates", key = "'USD_TRY'")
-    public BigDecimal getUsdToTryExchangeRate() {
+    public InvestmentExternalDto getUsdToTryInfo() {
         try {
             String url = URL.replace("API_URL", exchangeApiKey);
             ExchangeRateResponse response = restTemplate.getForObject(url, ExchangeRateResponse.class);
             if (response != null
                     && "success".equalsIgnoreCase(response.result())
                     && response.conversion_rate() != null) {
-                return response.conversion_rate();
+                return new InvestmentExternalDto(response.base_code(), response.conversion_rate());
             }
             throw new MarketDataFetchException("Invalid response from exchange rate API");
         } catch (MarketDataFetchException e) {
@@ -47,20 +50,22 @@ public class MarketDataService {
     }
 
     @Cacheable(value = "metalPrices", key = "#metalName.toLowerCase()")
-    public BigDecimal getMetalPrice(String metalName) {
+    public InvestmentExternalDto getMetalInfo(String metalName) {
         try {
             String url = "https://bloomberght.com/" + metalName;
             Document doc = Jsoup.connect(url).get();
             Element priceElement = doc
                     .select("[class^=security-] span")
                     .first();
-            
-            if (priceElement == null) {
-                throw new MarketDataFetchException("Price element not found for metal: " + metalName);
+            Element nameElement = doc.selectFirst("h1.font-unna");
+
+            if (priceElement == null || nameElement == null) {
+                throw new MarketDataFetchException("Price or name element not found for metal: " + metalName);
             }
-            
+
             String priceText = priceElement.text().replace(".", "");
-            return new BigDecimal(priceText.replace(",", "."));
+            String nameText = nameElement.text();
+            return new InvestmentExternalDto(nameText, new BigDecimal(priceText.replace(",", ".")));
         } catch (MarketDataFetchException e) {
             throw e;
         } catch (Exception e) {
@@ -70,7 +75,7 @@ public class MarketDataService {
 
 
     @Cacheable(value = "fundPrices", key = "#fundCode.toUpperCase()")
-    public BigDecimal getFundPrice(String fundCode) {
+    public InvestmentExternalDto getFundInfo(String fundCode) {
         try {
             String url = "https://api.fundfy.net/api/v1/fund/detail/" + fundCode;
             FundResponse response = restTemplate.getForObject(url, FundResponse.class);
@@ -79,9 +84,13 @@ public class MarketDataService {
                 throw new MarketDataFetchException("Invalid response from fundfy API for fund: " + fundCode);
             }
 
-            return response.price();
+            return new InvestmentExternalDto(response.title(), response.price());
         } catch (MarketDataFetchException e) {
             throw e;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.warn("Fund not found for code {}: {}", fundCode, e.getMessage());
+            throw new AssetNotFoundException("Fund not found for code: " + fundCode + ". Please check the code and try again.");
         } catch (Exception e) {
             log.error("Error fetching fund price for {}: {}", fundCode, e.getMessage());
             throw new MarketDataFetchException("Failed to fetch fund price for: " + fundCode, e);
