@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.*;
 import com.alpeerkaraca.fintrackserver.exception.EmailAlreadyExistsException;
+import com.alpeerkaraca.fintrackserver.exception.InvalidCredentialsException;
 import com.alpeerkaraca.fintrackserver.model.RefreshToken;
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import com.alpeerkaraca.fintrackserver.repository.RefreshTokenRepository;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
     private static final String DEFAULT_USER_ROLE = "ROLE_USER";
+    private static final String DUMMY_PASSWORD_HASH = "$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP";
 
     private final UserProfileRepository userProfileRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -50,10 +52,13 @@ public class AuthService {
 
     public AuthResult loginUser(LoginRequest request) {
         UserProfile user = userProfileRepository.findByUsername(request.username())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+                .orElse(null);
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new RuntimeException("Invalid username or password");
+        String passwordHash = (user != null) ? user.getPassword() : DUMMY_PASSWORD_HASH;
+        boolean passwordMatches = passwordEncoder.matches(request.password(), passwordHash);
+
+        if (user == null || !passwordMatches) {
+            throw new InvalidCredentialsException("Invalid username or password");
         }
 
         return new AuthResult(user.getId(), user.getUsername(), user.getEmail(), user.getNetSalaryUsd());
