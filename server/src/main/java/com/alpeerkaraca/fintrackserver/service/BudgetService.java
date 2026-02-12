@@ -39,15 +39,11 @@ public class BudgetService {
     private final TransactionService transactionService;
     private final MarketDataService marketDataService;
 
-    private String generateMonthId(UUID userId, int year, int month) {
-        return userId.toString() + "-" + year + "-" + String.format("%02d", month);
-    }
 
     public BudgetSummaryDto getBudgetSummary(UUID userId, Integer month, Integer year) {
         BigDecimal usdTryRate = marketDataService.getUsdToTryExchangeRate();
 
-        String monthId = generateMonthId(userId, year, month);
-        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findByUserProfileIdAndMonthAndYear(userId, month, year);
 
         BigDecimal totalIncome;
         BigDecimal totalExpense;
@@ -84,31 +80,32 @@ public class BudgetService {
 
     public List<ForecastResponse> getBudgetForecast(UUID userId) {
         List<ForecastResponse> forecastList = new ArrayList<>();
-        YearMonth currentMonth = YearMonth.now();
+        YearMonth current = YearMonth.now();
 
         for (int i = -3; i <= 3; i++) {
-            YearMonth targetMonth = currentMonth.plusMonths(i);
-            String monthId = generateMonthId(userId, targetMonth.getYear(), targetMonth.getMonthValue());
 
-            Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+            YearMonth target = current.plusMonths(i);
+            int targetMonth = target.getMonthValue();
+            int targetYear = target.getYear();
+            Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findByUserProfileIdAndMonthAndYear(userId, targetMonth, targetYear);
 
             BigDecimal savings;
 
             if (budgetMonthOpt.isPresent()) {
                 savings = budgetMonthOpt.get().getNetSavingsTry();
             } else {
-                if (targetMonth.isAfter(currentMonth)) {
+                if (target.isAfter(current)) {
                     savings = BigDecimal.ZERO;
                 } else {
-                    BigDecimal income = calculateIncomesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
-                    BigDecimal expense = calculateExpensesMonthly(userId, targetMonth.getMonthValue(), targetMonth.getYear());
+                    BigDecimal income = calculateIncomesMonthly(userId, targetMonth, targetYear);
+                    BigDecimal expense = calculateExpensesMonthly(userId, targetMonth, targetYear);
                     savings = income.subtract(expense);
                 }
             }
 
             forecastList.add(new ForecastResponse(
-                    targetMonth.toString(),
-                    targetMonth.getMonth().name().substring(0, 3),
+                    target.toString(),
+                    target.getMonth().name().substring(0, 3),
                     savings
             ));
         }
@@ -116,8 +113,7 @@ public class BudgetService {
     }
 
     public List<BudgetCategoryResponse> getCategoryWatchlist(UUID userId, Integer month, Integer year) {
-        String monthId = generateMonthId(userId, year, month);
-        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findById(monthId);
+        Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findByUserProfileIdAndMonthAndYear(userId, month, year);
 
         List<BudgetCategory> categoryList;
 
@@ -209,7 +205,7 @@ public class BudgetService {
     }
 
     private String getAlertStatus(BigDecimal income, BigDecimal expense) {
-        if (income.compareTo(BigDecimal.ZERO) == 0) return ALERT_DANGER;
+        if (income.compareTo(BigDecimal.ZERO) <= 0) return ALERT_DANGER;
         BigDecimal ratio = expense.divide(income, 2, RoundingMode.HALF_UP);
         if (ratio.doubleValue() >= ALERT_DANGER_THRESHOLD) return ALERT_DANGER;
         if (ratio.doubleValue() >= ALERT_WARNING_THRESHOLD) return ALERT_WARNING;
@@ -217,7 +213,7 @@ public class BudgetService {
     }
 
     private String calculateLimitStatus(BigDecimal totalSpent, BigDecimal limitTry) {
-        if (limitTry.compareTo(BigDecimal.ZERO) == 0) return LIMIT_NORMAL;
+        if (limitTry.compareTo(BigDecimal.ZERO) <= 0) return LIMIT_NORMAL;
         double ratio = totalSpent.divide(limitTry, 2, RoundingMode.HALF_UP).doubleValue();
         if (ratio >= Double.parseDouble(LIMIT_DANGER_THRESHOLD)) return LIMIT_DANGER;
         if (ratio >= Double.parseDouble(LIMIT_WARNING_THRESHOLD)) return LIMIT_WARNING;
