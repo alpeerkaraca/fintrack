@@ -4,6 +4,7 @@ import com.alpeerkaraca.fintrackserver.model.PaymentMethod;
 import com.alpeerkaraca.fintrackserver.model.Transaction;
 import com.alpeerkaraca.fintrackserver.model.TransactionType;
 import net.bytebuddy.asm.Advice;
+import org.springframework.beans.factory.BeanRegistry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
