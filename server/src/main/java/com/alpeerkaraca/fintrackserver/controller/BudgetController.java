@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alpeerkaraca.fintrackserver.dto.ApiResponse;
 import com.alpeerkaraca.fintrackserver.dto.BudgetCategoryResponse;
 import com.alpeerkaraca.fintrackserver.dto.BudgetSummaryDto;
 import com.alpeerkaraca.fintrackserver.dto.ForecastResponse;
@@ -26,32 +27,32 @@ public class BudgetController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<BudgetSummaryDto> getBudgetSummary(
+    public ResponseEntity<ApiResponse<BudgetSummaryDto>> getBudgetSummary(
             @RequestParam Integer month,
             @RequestParam Integer year,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-        return ResponseEntity.ok(budgetService.getBudgetSummary(userPrincipal.id(), month, year));
+        return ResponseEntity.ok(ApiResponse.success(budgetService.getBudgetSummary(userPrincipal.id(), month, year)));
     }
 
     @GetMapping("/forecast")
-    public ResponseEntity<List<ForecastResponse>> getBudgetForecast(
+    public ResponseEntity<ApiResponse<List<ForecastResponse>>> getBudgetForecast(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        return ResponseEntity.ok(budgetService.getBudgetForecast(userPrincipal.id()));
+        return ResponseEntity.ok(ApiResponse.success(budgetService.getBudgetForecast(userPrincipal.id())));
     }
 
     @GetMapping("/alerts")
-    public ResponseEntity<String> getBudgetAlert(
+    public ResponseEntity<ApiResponse<String>> getBudgetAlert(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        return ResponseEntity.ok(budgetService.getBudgetAlerts(userPrincipal.id()));
+        return ResponseEntity.ok(ApiResponse.success(budgetService.getBudgetAlerts(userPrincipal.id())));
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<List<BudgetCategoryResponse>> getBudgetCategories(
+    public ResponseEntity<ApiResponse<List<BudgetCategoryResponse>>> getBudgetCategories(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam Integer month,
             @RequestParam Integer year) {
-        return ResponseEntity.ok(budgetService.getCategoryWatchlist(userPrincipal.id(), month, year));
+        return ResponseEntity.ok(ApiResponse.success(budgetService.getCategoryWatchlist(userPrincipal.id(), month, year)));
     }
 
 }
