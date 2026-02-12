@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import com.alpeerkaraca.fintrackserver.security.JwtSecurityFilter;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity(debug = false)
 public class WebSecurity {
     private final JwtSecurityFilter jwtSecurityFilter;
 
@@ -39,7 +39,7 @@ public class WebSecurity {
                         (CorsConfigurationSource) request -> {
                             CorsConfiguration corsConfiguration = new CorsConfiguration();
                             corsConfiguration.setAllowedOriginPatterns(List.of("https://localhost:3000"));
-                            corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                            corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                             corsConfiguration.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN"));
                             corsConfiguration.setAllowCredentials(true);
                             return corsConfiguration;
