@@ -31,15 +31,6 @@ public class InvestmentAsset {
     @Column(nullable = false)
     private BigDecimal avgCostTry;
 
-    @Column(nullable = false)
-    private BigDecimal currentPriceTry;
-
-    @Column(nullable = false)
-    private BigDecimal changePercent;
-
-    @Column(nullable = false)
-    private BigDecimal profitLossTry;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AssetType type;

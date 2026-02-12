@@ -41,7 +41,7 @@ public class BudgetService {
 
 
     public BudgetSummaryDto getBudgetSummary(UUID userId, Integer month, Integer year) {
-        BigDecimal usdTryRate = marketDataService.getUsdToTryExchangeRate();
+        BigDecimal usdTryRate = marketDataService.getUsdToTryInfo().price();
 
         Optional<BudgetMonth> budgetMonthOpt = budgetMonthRepository.findByUserProfileIdAndMonthAndYear(userId, month, year);
 

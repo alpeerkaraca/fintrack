@@ -30,7 +30,7 @@ public class DashboardService {
         List<ForecastResponse> forecast = budgetService.getBudgetForecast(userId);
         List<BudgetCategoryResponse> categoryWatchList = budgetService.getCategoryWatchlist(userId, month, year);
         List<InvestmentAssetDto> investments = investmentService.getUserPortfolio(userId);
-        BigDecimal currentUsdTryRate = marketDataService.getUsdToTryExchangeRate();
+        BigDecimal currentUsdTryRate = marketDataService.getUsdToTryInfo().price();
 
         return DashboardOverviewCore.builder()
                 .summary(summary)
