@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,18 +28,14 @@ public class MarketDataController {
         response.put(AssetType.GOLD_SILVER.name(), List.of(MarketAssetType.values()));
 
         response.put(AssetType.CURRENCY.name(), List.of(
-                Map.of("slug", "USD", "label", "Amerikan Doları"),
-                Map.of("slug", "EUR", "label", "Euro"),
-                Map.of("slug", "GBP", "label", "İngiliz Sterlini")
+                Map.of("slug", "USD", "label", "Amerikan Doları")
         ));
-        response.put(AssetType.FUND.name(), Collections.emptyList());
-        response.put(AssetType.STOCK.name(), Collections.emptyList());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/usd-try")
     public ResponseEntity<ApiResponse<ExchangeRateDto>> getUsdTryRate() {
-        ExchangeRateDto exchangeRateDto = new ExchangeRateDto(marketDataService.getUsdToTryExchangeRate());
+        ExchangeRateDto exchangeRateDto = new ExchangeRateDto(marketDataService.getUsdToTryInfo().price());
         return ResponseEntity.ok(ApiResponse.success(exchangeRateDto));
     }
 }
