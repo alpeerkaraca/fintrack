@@ -102,6 +102,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle asset not found exceptions
+     */
+    @ExceptionHandler(AssetNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAssetNotFound(
+            AssetNotFoundException ex,
+            HttpServletRequest request) {
+        log.warn("Asset not found for request to {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage(), request.getRequestURI()));
+    }
+
+    /**
      * Handle request validation errors (e.g., @Valid annotations)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -116,6 +129,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("Invalid request: " + errors, request.getRequestURI()));
+    }
+    /**
+     * Handle Asset delete exceptions
+     */
+    @ExceptionHandler(AssetDeleteException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAssetDelete(
+            AssetDeleteException ex,
+            HttpServletRequest request) {
+        log.warn("Asset delete failed for request to {}: {}", request.getRequestURI(), ex);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage(), request.getRequestURI()));
     }
 
     /**
@@ -168,6 +193,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Service is temporarily unavailable. Please contact support.", request.getRequestURI()));
+    }
+
+    /**
+     * Handle asset already exists in portfolio
+     */
+    @ExceptionHandler(AssetAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAssetAlreadyExists(
+            AssetAlreadyExistsException ex,
+            HttpServletRequest request) {
+        log.warn("Attempt to add duplicate asset for request to {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage(), request.getRequestURI()));
     }
 
     /**
