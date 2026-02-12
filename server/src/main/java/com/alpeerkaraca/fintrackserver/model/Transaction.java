@@ -9,7 +9,12 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "transactions")
+@Table(name = "transactions",
+indexes = {
+        @Index(name = "idx_tx_user_date", columnList = "user_profile_id, date"),
+        @Index(name = "idx_tx_user_category", columnList = "user_profile_id, category, date")
+})
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +28,7 @@ public class Transaction {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amountTry;
 
     @Column(nullable = false)
@@ -44,6 +49,11 @@ public class Transaction {
     private Boolean isInstallment = false;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "totalTry", column = @Column(name = "total_try", precision = 19, scale = 2)),
+            @AttributeOverride(name = "months", column = @Column(name = "months")),
+            @AttributeOverride(name = "startMonth", column = @Column(name = "start_month"))
+    })
     private InstallmentMeta installmentMeta;
 
     @ManyToOne(fetch = FetchType.LAZY)
