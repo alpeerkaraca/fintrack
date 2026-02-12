@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.strategy.investments;
 
+import com.alpeerkaraca.fintrackserver.dto.InvestmentExternalDto;
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,7 +11,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class StockPriceStrategy implements PriceStrategy {
     @Override
-    public BigDecimal fetchPrice(String symbol) {
+    public InvestmentExternalDto fetchInfo(String symbol) {
         return null;
     }
 
