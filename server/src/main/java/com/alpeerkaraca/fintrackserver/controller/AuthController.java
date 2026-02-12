@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.controller;
 
+import com.alpeerkaraca.fintrackserver.dto.ApiResponse;
 import com.alpeerkaraca.fintrackserver.dto.AuthResult;
 import com.alpeerkaraca.fintrackserver.dto.LoginRequest;
 import com.alpeerkaraca.fintrackserver.dto.RegisterRequest;
@@ -19,34 +20,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequestMapping("/api/v1/auth/")
+@RequestMapping("/api/v1/auth")
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
 
-    @Value("${app.jwt.expiration}")
-    private long ACCESS_TOKEN_EXPIRATION_SEC;
-    @Value("${app.jwt.refresh-expiration}")
-    private long REFRESH_TOKEN_EXPIRATION_SEC;
+    @Value("${app.jwt.expiration-sec}")
+    private long accessTokenExpirationSec;
+    @Value("${app.jwt.refresh-expiration-sec}")
+    private long refreshTokenExpirationSec;
 
     private final AuthService authService;
 
-    @PostMapping("login")
-    public ResponseEntity<AuthResult> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<AuthResult>> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
         AuthResult user = authService.loginUser(request);
 
         return getAuthResultResponseEntity(http, user);
     }
 
-    @PostMapping("register")
-    public ResponseEntity<AuthResult> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<AuthResult>> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
         AuthResult user = authService.registerUser(request);
 
         return getAuthResultResponseEntity(http, user);
     }
 
     @NonNull
-    private ResponseEntity<AuthResult> getAuthResultResponseEntity(HttpServletRequest http, AuthResult user) {
+    private ResponseEntity<ApiResponse<AuthResult>> getAuthResultResponseEntity(HttpServletRequest http, AuthResult user) {
         String ip = http.getRemoteAddr();
         String ua = http.getHeader("User-Agent");
 
@@ -57,30 +58,30 @@ public class AuthController {
         );
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, AuthCookies.accessCookie(pair.accessToken(), ACCESS_TOKEN_EXPIRATION_SEC).toString())
-                .header(HttpHeaders.SET_COOKIE, AuthCookies.refreshCookie(pair.refreshToken(), REFRESH_TOKEN_EXPIRATION_SEC).toString())
-                .body(user);
+                .header(HttpHeaders.SET_COOKIE, AuthCookies.accessCookie(pair.accessToken(), accessTokenExpirationSec).toString())
+                .header(HttpHeaders.SET_COOKIE, AuthCookies.refreshCookie(pair.refreshToken(), refreshTokenExpirationSec).toString())
+                .body(ApiResponse.success("Authentication successful", user));
     }
 
-    @PostMapping("refresh")
-    public ResponseEntity<Void> refresh(HttpServletRequest request) {
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<Void>> refresh(HttpServletRequest request) {
         String refreshToken = Utils.getCookie(request, "refresh_token");
 
         String ip = request.getRemoteAddr();
         String ua = request.getHeader("User-Agent");
         TokenPair pair = authService.refreshTokens(refreshToken, ip, ua);
 
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, AuthCookies.accessCookie(pair.accessToken(), ACCESS_TOKEN_EXPIRATION_SEC).toString())
-                .header(HttpHeaders.SET_COOKIE, AuthCookies.refreshCookie(pair.refreshToken(), REFRESH_TOKEN_EXPIRATION_SEC).toString())
-                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, AuthCookies.accessCookie(pair.accessToken(), accessTokenExpirationSec).toString())
+                .header(HttpHeaders.SET_COOKIE, AuthCookies.refreshCookie(pair.refreshToken(), refreshTokenExpirationSec).toString())
+                .body(ApiResponse.success("Token refreshed successfully"));
     }
 
-    @PostMapping("logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
-        return ResponseEntity.noContent()
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, AuthCookies.clearAccessCookie().toString())
                 .header(HttpHeaders.SET_COOKIE, AuthCookies.clearRefreshCookie().toString())
-                .build();
+                .body(ApiResponse.success("Logged out successfully"));
     }
 }

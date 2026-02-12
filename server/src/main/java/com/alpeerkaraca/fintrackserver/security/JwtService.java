@@ -29,9 +29,9 @@ public class JwtService {
     private static final String TOKEN_TYPE_ACCESS = "access";
     @Value("${app.jwt.secret}")
     private String jwtSecret;
-    @Value("${app.jwt.expiration}")
+    @Value("${app.jwt.expiration-ms}")
     private long jwtExpirationMillis;
-    @Value("${app.jwt.refresh-expiration}")
+    @Value("${app.jwt.refresh-expiration-ms}")
     private long jwtRefreshExpirationMillis;
     @Value("${app.jwt.issuer}")
     private String jwtIssuer;
@@ -130,6 +130,9 @@ public class JwtService {
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes (256 bits) long");
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
