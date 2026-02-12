@@ -1,6 +1,7 @@
 package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.BudgetMonth;
+import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,23 +21,38 @@ class BudgetMonthRepositoryTest {
     private BudgetMonthRepository budgetMonthRepository;
 
     private BudgetMonth testBudgetMonth;
-
+    private UserProfile testUserProfile;
+    private UUID testMonthId = UUID.randomUUID();
+    private UUID testUserId = UUID.randomUUID();
     @BeforeEach
     void setUp() {
+        testUserProfile = UserProfile.builder()
+                .id(testUserId)
+                .username("testuser")
+                .email("test@fintrack.com")
+                .password("usertestpasswordsisherebutshouldbereplacedwithhash")
+                .netSalaryUsd(BigDecimal.valueOf(1000))
+                .creditCardLimitTry(BigDecimal.valueOf(1000))
+                .build();
         testBudgetMonth = BudgetMonth.builder()
-                .monthId("2024-01")
+                .id(testMonthId)
+                .month(1)
+                .year(2024)
                 .label("January 2024")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
                 .netSavingsTry(BigDecimal.valueOf(3000))
+                .userProfile(testUserProfile)
                 .build();
+
     }
 
     @Test
     void shouldSaveBudgetMonth() {
         BudgetMonth saved = budgetMonthRepository.save(testBudgetMonth);
 
-        assertThat(saved.getMonthId()).isEqualTo("2024-01");
+        assertThat(saved.getMonth()).isEqualTo(1);
+        assertThat(saved.getYear()).isEqualTo(2024);
         assertThat(saved.getLabel()).isEqualTo("January 2024");
     }
 
@@ -43,15 +60,16 @@ class BudgetMonthRepositoryTest {
     void shouldFindBudgetMonthById() {
         budgetMonthRepository.save(testBudgetMonth);
 
-        Optional<BudgetMonth> found = budgetMonthRepository.findById("2024-01");
+        Optional<BudgetMonth> found = budgetMonthRepository.findById(testMonthId);
 
         assertThat(found).isPresent();
-        assertThat(found.get().getMonthId()).isEqualTo("2024-01");
+        assertThat(found.get().getMonth()).isEqualTo(1);
+        assertThat(found.get().getYear()).isEqualTo(2024);
     }
 
     @Test
     void shouldReturnEmptyWhenBudgetMonthNotFound() {
-        Optional<BudgetMonth> found = budgetMonthRepository.findById("2099-12");
+        Optional<BudgetMonth> found = budgetMonthRepository.findById(UUID.randomUUID());
 
         assertThat(found).isEmpty();
     }
@@ -60,9 +78,9 @@ class BudgetMonthRepositoryTest {
     void shouldDeleteBudgetMonth() {
         budgetMonthRepository.save(testBudgetMonth);
 
-        budgetMonthRepository.deleteById("2024-01");
+        budgetMonthRepository.deleteById(testMonthId);
 
-        Optional<BudgetMonth> found = budgetMonthRepository.findById("2024-01");
+        Optional<BudgetMonth> found = budgetMonthRepository.findById(testMonthId);
         assertThat(found).isEmpty();
     }
 
@@ -75,7 +93,7 @@ class BudgetMonthRepositoryTest {
 
         budgetMonthRepository.save(testBudgetMonth);
 
-        BudgetMonth updated = budgetMonthRepository.findById("2024-01").get();
+        BudgetMonth updated = budgetMonthRepository.findById(testMonthId).get();
         assertThat(updated.getIncomeTry()).isEqualByComparingTo(BigDecimal.valueOf(15000));
         assertThat(updated.getExpenseTry()).isEqualByComparingTo(BigDecimal.valueOf(8000));
         assertThat(updated.getNetSavingsTry()).isEqualByComparingTo(BigDecimal.valueOf(7000));
@@ -85,16 +103,17 @@ class BudgetMonthRepositoryTest {
     void shouldPreserveMonthIdentifier() {
         budgetMonthRepository.save(testBudgetMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-01").get();
+        BudgetMonth found = budgetMonthRepository.findById(testMonthId).get();
 
-        assertThat(found.getMonthId()).isEqualTo("2024-01");
+        assertThat(found.getMonth()).isEqualTo(1);
+        assertThat(found.getYear()).isEqualTo(2024);
     }
 
     @Test
     void shouldPreserveLabel() {
         budgetMonthRepository.save(testBudgetMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-01").get();
+        BudgetMonth found = budgetMonthRepository.findById(testMonthId).get();
 
         assertThat(found.getLabel()).isEqualTo("January 2024");
     }
@@ -103,7 +122,8 @@ class BudgetMonthRepositoryTest {
     void shouldCountAllBudgetMonths() {
         budgetMonthRepository.save(testBudgetMonth);
         BudgetMonth anotherMonth = BudgetMonth.builder()
-                .monthId("2024-02")
+                .month(2)
+                .year(2024)
                 .label("February 2024")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(6500))
@@ -118,15 +138,21 @@ class BudgetMonthRepositoryTest {
 
     @Test
     void shouldDistinguishBetweenDifferentMonths() {
+        UUID janId = UUID.randomUUID();
+        UUID febId = UUID.randomUUID();
         BudgetMonth january = BudgetMonth.builder()
-                .monthId("2024-01")
+                .id(janId)
+                .month(1)
+                .year(2024)
                 .label("January 2024")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
                 .netSavingsTry(BigDecimal.valueOf(3000))
                 .build();
         BudgetMonth february = BudgetMonth.builder()
-                .monthId("2024-02")
+                .id(febId)
+                .month(2)
+                .year(2024)
                 .label("February 2024")
                 .incomeTry(BigDecimal.valueOf(11000))
                 .expenseTry(BigDecimal.valueOf(8000))
@@ -136,8 +162,8 @@ class BudgetMonthRepositoryTest {
         budgetMonthRepository.save(january);
         budgetMonthRepository.save(february);
 
-        BudgetMonth foundJanuary = budgetMonthRepository.findById("2024-01").get();
-        BudgetMonth foundFebruary = budgetMonthRepository.findById("2024-02").get();
+        BudgetMonth foundJanuary = budgetMonthRepository.findById(janId).get();
+        BudgetMonth foundFebruary = budgetMonthRepository.findById(febId).get();
 
         assertThat(foundJanuary.getIncomeTry()).isNotEqualByComparingTo(foundFebruary.getIncomeTry());
         assertThat(foundJanuary.getExpenseTry()).isNotEqualByComparingTo(foundFebruary.getExpenseTry());
@@ -145,8 +171,11 @@ class BudgetMonthRepositoryTest {
 
     @Test
     void shouldHandleZeroIncome() {
+        UUID noIncomeId = UUID.randomUUID();
         BudgetMonth noIncomeMonth = BudgetMonth.builder()
-                .monthId("2024-03")
+                .id(noIncomeId)
+                .month(3)
+                .year(2024)
                 .label("March 2024")
                 .incomeTry(BigDecimal.ZERO)
                 .expenseTry(BigDecimal.valueOf(1000))
@@ -155,14 +184,17 @@ class BudgetMonthRepositoryTest {
 
         budgetMonthRepository.save(noIncomeMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-03").get();
+        BudgetMonth found = budgetMonthRepository.findById(noIncomeId).get();
         assertThat(found.getIncomeTry()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
     void shouldHandleZeroExpense() {
+        UUID noExpenseId = UUID.randomUUID();
         BudgetMonth noExpenseMonth = BudgetMonth.builder()
-                .monthId("2024-04")
+                .id(noExpenseId)
+                .month(4)
+                .year(2024)
                 .label("April 2024")
                 .incomeTry(BigDecimal.valueOf(5000))
                 .expenseTry(BigDecimal.ZERO)
@@ -171,14 +203,17 @@ class BudgetMonthRepositoryTest {
 
         budgetMonthRepository.save(noExpenseMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-04").get();
+        BudgetMonth found = budgetMonthRepository.findById(noExpenseId).get();
         assertThat(found.getExpenseTry()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
     void shouldHandleNegativeNetSavings() {
+        UUID negativeId = UUID.randomUUID();
         BudgetMonth negativeMonth = BudgetMonth.builder()
-                .monthId("2024-05")
+                .id(negativeId)
+                .month(5)
+                .year(2024)
                 .label("May 2024")
                 .incomeTry(BigDecimal.valueOf(5000))
                 .expenseTry(BigDecimal.valueOf(7000))
@@ -187,14 +222,17 @@ class BudgetMonthRepositoryTest {
 
         budgetMonthRepository.save(negativeMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-05").get();
+        BudgetMonth found = budgetMonthRepository.findById(negativeId).get();
         assertThat(found.getNetSavingsTry()).isEqualByComparingTo(BigDecimal.valueOf(-2000));
     }
 
     @Test
     void shouldHandleLargeMonetaryValues() {
+        UUID largeId = UUID.randomUUID();
         BudgetMonth largeMonth = BudgetMonth.builder()
-                .monthId("2024-06")
+                .id(largeId)
+                .month(6)
+                .year(2024)
                 .label("June 2024")
                 .incomeTry(BigDecimal.valueOf(999999.99))
                 .expenseTry(BigDecimal.valueOf(500000.50))
@@ -203,7 +241,7 @@ class BudgetMonthRepositoryTest {
 
         budgetMonthRepository.save(largeMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-06").get();
+        BudgetMonth found = budgetMonthRepository.findById(largeId).get();
         assertThat(found.getIncomeTry()).isEqualByComparingTo(BigDecimal.valueOf(999999.99));
     }
 
@@ -211,7 +249,7 @@ class BudgetMonthRepositoryTest {
     void shouldPreserveEmptyCategoriesList() {
         budgetMonthRepository.save(testBudgetMonth);
 
-        BudgetMonth found = budgetMonthRepository.findById("2024-01").get();
+        BudgetMonth found = budgetMonthRepository.findById(testMonthId).get();
 
         assertThat(found.getCategories()).isNotNull();
         assertThat(found.getCategories()).isEmpty();
@@ -219,15 +257,21 @@ class BudgetMonthRepositoryTest {
 
     @Test
     void shouldHandleDifferentYears() {
+        UUID id2023 = UUID.randomUUID();
+        UUID id2025 = UUID.randomUUID();
         BudgetMonth year2023 = BudgetMonth.builder()
-                .monthId("2023-12")
+                .id(id2023)
+                .month(12)
+                .year(2023)
                 .label("December 2023")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
                 .netSavingsTry(BigDecimal.valueOf(3000))
                 .build();
         BudgetMonth year2025 = BudgetMonth.builder()
-                .monthId("2025-01")
+                .id(id2025)
+                .month(1)
+                .year(2025)
                 .label("January 2025")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
@@ -237,19 +281,20 @@ class BudgetMonthRepositoryTest {
         budgetMonthRepository.save(year2023);
         budgetMonthRepository.save(year2025);
 
-        assertThat(budgetMonthRepository.findById("2023-12")).isPresent();
-        assertThat(budgetMonthRepository.findById("2025-01")).isPresent();
+        assertThat(budgetMonthRepository.findById(id2023)).isPresent();
+        assertThat(budgetMonthRepository.findById(id2025)).isPresent();
     }
 
     @Test
     void shouldPreserveMonthKeyAfterUpdate() {
         budgetMonthRepository.save(testBudgetMonth);
-        String originalMonth = testBudgetMonth.getMonthId();
+        UUID originalMonth = testBudgetMonth.getId();
 
         testBudgetMonth.setIncomeTry(BigDecimal.valueOf(20000));
         budgetMonthRepository.save(testBudgetMonth);
 
         BudgetMonth updated = budgetMonthRepository.findById(originalMonth).get();
-        assertThat(updated.getMonthId()).isEqualTo(originalMonth);
+        assertThat(updated.getYear()).isEqualTo(testBudgetMonth.getYear());
+        assertThat(updated.getMonth()).isEqualTo(testBudgetMonth.getMonth());
     }
 }
