@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -11,9 +12,9 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { USD_TRY_RATE } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
-import { signOut } from "@/lib/auth";
+import { authFetch, signOut } from "@/lib/auth";
+import { parseApiResponse } from "@/lib/api";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutGrid, href: "/" },
@@ -29,10 +30,39 @@ const isActivePath = (pathname: string, href: string) => {
   return pathname.startsWith(href);
 };
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const [usdTryRate, setUsdTryRate] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isAuthPage) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchUsdTry = async () => {
+      try {
+        const response = await authFetch("/api/v1/market-data/usd-try");
+        const payload = await parseApiResponse<{ usdTry: number }>(response);
+        if (!cancelled) {
+          setUsdTryRate(payload.usdTry);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsdTryRate(null);
+        }
+      }
+    };
+
+    void fetchUsdTry();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthPage]);
 
   if (isAuthPage) {
     return <main className="min-h-screen bg-background text-foreground">{children}</main>;
@@ -81,12 +111,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold">USD/TRY</p>
-                  <p className="text-2xl font-semibold">{USD_TRY_RATE}</p>
+                  <p className="text-2xl font-semibold">
+                    {usdTryRate !== null ? usdTryRate.toFixed(4) : "--"}
+                  </p>
                 </div>
                 <BadgeDollarSign className="h-6 w-6 text-primary" />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Mocked exchange rate update every session.
+                Live market data from backend.
               </p>
             </div>
             <button
