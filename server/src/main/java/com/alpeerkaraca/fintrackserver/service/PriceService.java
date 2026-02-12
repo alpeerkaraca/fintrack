@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.service;
 
+import com.alpeerkaraca.fintrackserver.dto.InvestmentExternalDto;
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.strategy.investments.PriceStrategy;
 import lombok.RequiredArgsConstructor;
@@ -13,11 +14,11 @@ import java.util.List;
 public class PriceService {
     private final List<PriceStrategy> strategies;
 
-    public BigDecimal getPrice(AssetType type, String symbol) {
+    public InvestmentExternalDto getInfo(AssetType type, String symbol) {
         return strategies.stream()
                 .filter(s -> s.supports(type))
                 .findFirst()
-                .map(s -> s.fetchPrice(symbol))
+                .map(s -> s.fetchInfo(symbol))
                 .orElseThrow(() -> new IllegalArgumentException("Unsupported asset type: " + type));
     }
 }

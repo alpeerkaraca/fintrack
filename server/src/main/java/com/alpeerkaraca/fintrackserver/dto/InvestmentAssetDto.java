@@ -1,11 +1,13 @@
 package com.alpeerkaraca.fintrackserver.dto;
 
+import com.alpeerkaraca.fintrackserver.model.AssetType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -20,7 +22,9 @@ import jakarta.validation.constraints.Size;
 @Builder
 public class InvestmentAssetDto {
     @NotBlank
-    @Size(max = 50)
+    private UUID id;
+    @NotBlank
+    @Size(min = 1, max = 12)
     private String symbol;
 
     @NotBlank
@@ -48,4 +52,7 @@ public class InvestmentAssetDto {
     @NotNull
     @Digits(integer = 20, fraction = 2)
     private BigDecimal profitLossTry;
+
+    @NotNull
+    private AssetType assetType;
 }
