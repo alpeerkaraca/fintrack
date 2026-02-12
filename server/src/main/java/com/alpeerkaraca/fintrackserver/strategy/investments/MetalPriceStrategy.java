@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.strategy.investments;
 
+import com.alpeerkaraca.fintrackserver.dto.InvestmentExternalDto;
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.service.MarketDataService;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +14,8 @@ public class MetalPriceStrategy implements PriceStrategy{
     private final MarketDataService marketDataService;
 
     @Override
-    public BigDecimal fetchPrice(String symbol) {
-        return marketDataService.getMetalPrice(symbol);
+    public InvestmentExternalDto fetchInfo(String symbol) {
+        return marketDataService.getMetalInfo(symbol);
     }
 
     @Override
