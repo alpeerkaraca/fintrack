@@ -1,6 +1,9 @@
 spring:
   application:
     name: fintrack-server
-    
+  jackson:
+    deserialization:
+      use-big-decimal-for-floats: true
+
 server:
   port: 8080
