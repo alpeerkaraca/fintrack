@@ -29,7 +29,8 @@ class BudgetCategoryRepositoryTest {
     @BeforeEach
     void setUp() {
         testBudgetMonth = BudgetMonth.builder()
-                .monthId("2024-01")
+                .year(2024)
+                .month(1)
                 .label("January 2024")
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
@@ -100,7 +101,8 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory found = budgetCategoryRepository.findById(saved.getId()).get();
 
         assertThat(found.getBudgetMonth()).isNotNull();
-        assertThat(found.getBudgetMonth().getMonthId()).isEqualTo("2024-01");
+        assertThat(found.getBudgetMonth().getYear()).isEqualTo(2024);
+        assertThat(found.getBudgetMonth().getMonth()).isEqualTo(1);
     }
 
     @Test

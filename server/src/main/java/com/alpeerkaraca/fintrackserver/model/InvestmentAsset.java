@@ -44,7 +44,7 @@ public class InvestmentAsset {
     @Column(nullable = false)
     private AssetType type;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_profile_id", nullable = false)
     private UserProfile userProfile;
 }
