@@ -21,13 +21,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TransactionsRepositoryTest {
     @Autowired
     private TransactionRepository transactionsRepository;
+    
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     private Transaction testTransaction;
     private LocalDate today;
+    private com.alpeerkaraca.fintrackserver.model.UserProfile testUserProfile;
 
     @BeforeEach
     void setUp() {
         today = LocalDate.now();
+        
+        testUserProfile = com.alpeerkaraca.fintrackserver.model.UserProfile.builder()
+                .username("testuser")
+                .email("test@fintrack.com")
+                .password("usertestpasswordsisherebutshouldbereplacedwithhash")
+                .netSalaryUsd(BigDecimal.valueOf(1000))
+                .creditCardLimitTry(BigDecimal.valueOf(1000))
+                .build();
+        testUserProfile = userProfileRepository.save(testUserProfile);
+        
         testTransaction = Transaction.builder()
                 .title("Grocery Shopping")
                 .amountTry(BigDecimal.valueOf(250))
@@ -35,6 +49,7 @@ class TransactionsRepositoryTest {
                 .category("Food")
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
+                .userProfile(testUserProfile)
                 .build();
     }
 
@@ -144,6 +159,7 @@ class TransactionsRepositoryTest {
     void shouldCountAllTransactions() {
         transactionsRepository.save(testTransaction);
         Transaction anotherTransaction = Transaction.builder()
+                .userProfile(testUserProfile)
                 .title("Restaurant")
                 .amountTry(BigDecimal.valueOf(100))
                 .date(today)
