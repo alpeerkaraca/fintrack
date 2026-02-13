@@ -75,7 +75,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .header("User-Agent", "Test-Agent"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("alpeerkaraca"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.username").value("alpeerkaraca"))
                 // Cookie kontrolleri
                 .andExpect(header().exists("Set-Cookie"))
                 .andExpect(cookie().value(AuthCookies.ACCESS_COOKIE, "access.jwt.token"))
@@ -95,7 +96,8 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .cookie(refreshCookie))
-                .andExpect(status().isNoContent())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(cookie().value(AuthCookies.ACCESS_COOKIE, "access.jwt.token"))
                 .andExpect(cookie().value(AuthCookies.REFRESH_COOKIE, "refresh.jwt.token"));
     }
@@ -104,7 +106,8 @@ class AuthControllerTest {
     @DisplayName("Should clear cookies on logout")
     void shouldClearCookiesOnLogout() throws Exception {
         mockMvc.perform(post("/api/v1/auth/logout"))
-                .andExpect(status().isNoContent())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
                 .andExpect(cookie().maxAge(AuthCookies.ACCESS_COOKIE, 0))
                 .andExpect(cookie().maxAge(AuthCookies.REFRESH_COOKIE, 0));
     }

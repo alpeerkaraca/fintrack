@@ -6,10 +6,22 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+  cache:
+    type: none
+  flyway:
+    enabled: false
+
 app:
   jwt:
     secret: test-secret-key-is-here-and-it-is-so-secure-as-you-can-see
-    expiration: 3600000
-    refresh-expiration: 86400000
+    expiration-ms: 3600000
+    refresh-expiration-ms: 86400000
+    expiration-sec: 3600
+    refresh-expiration-sec: 86400
     issuer: test-issuer
     audience: test-audience
+  exchange:
+    api-key: test-api-key
