@@ -7,7 +7,23 @@ export type ApiResponse<T> = {
   timestamp?: string;
 };
 
-export function parseApiResponse<T>(response: unknown): T {
+export async function parseApiResponse<T>(response: unknown): Promise<T> {
+  if (response instanceof Response) {
+    if (!response.ok) {
+      let message = "Request failed";
+      try {
+        const body = (await response.json()) as ApiResponse<unknown>;
+        message = body.error || body.message || message;
+      } catch {
+        // Fall back to default message for non-JSON responses.
+      }
+      throw new Error(message);
+    }
+
+    const body = (await response.json()) as ApiResponse<T>;
+    return parseApiResponse<T>(body);
+  }
+
   if (!response || typeof response !== "object") {
     throw new Error("Invalid API response");
   }

@@ -117,7 +117,7 @@ public class BudgetService {
 
         List<BudgetCategory> categoryList;
 
-        if (budgetMonthOpt.isPresent()) {
+        if (budgetMonthOpt.isPresent() && budgetMonthOpt.get().getCategories() != null) {
             categoryList = budgetMonthOpt.get().getCategories();
         } else {
             categoryList = new ArrayList<>();

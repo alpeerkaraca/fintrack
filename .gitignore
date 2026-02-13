@@ -23,4 +23,4 @@ target/
 *.swp
 *.bak
 .github/
-agents.md
+agents.md.github/copilot-instructions.md

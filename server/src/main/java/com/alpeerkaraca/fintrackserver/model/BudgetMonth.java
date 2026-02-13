@@ -38,7 +38,7 @@ public class BudgetMonth {
     @Column(nullable = false)
     private int year;
 
-    @Column(nullable = false)
+    @Column(name = "\"month\"", nullable = false)
     private int month;
 
     @Column(nullable = false)
