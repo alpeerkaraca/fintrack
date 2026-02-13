@@ -22,12 +22,25 @@ class BudgetCategoryRepositoryTest {
 
     @Autowired
     private BudgetMonthRepository budgetMonthRepository;
+    
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     private BudgetMonth testBudgetMonth;
     private BudgetCategory testCategory;
+    private com.alpeerkaraca.fintrackserver.model.UserProfile testUserProfile;
 
     @BeforeEach
     void setUp() {
+        testUserProfile = com.alpeerkaraca.fintrackserver.model.UserProfile.builder()
+                .username("testuser")
+                .email("test@fintrack.com")
+                .password("usertestpasswordsisherebutshouldbereplacedwithhash")
+                .netSalaryUsd(BigDecimal.valueOf(1000))
+                .creditCardLimitTry(BigDecimal.valueOf(1000))
+                .build();
+        testUserProfile = userProfileRepository.save(testUserProfile);
+        
         testBudgetMonth = BudgetMonth.builder()
                 .year(2024)
                 .month(1)
@@ -35,11 +48,13 @@ class BudgetCategoryRepositoryTest {
                 .incomeTry(BigDecimal.valueOf(10000))
                 .expenseTry(BigDecimal.valueOf(7000))
                 .netSavingsTry(BigDecimal.valueOf(3000))
+                .userProfile(testUserProfile)
                 .build();
         testBudgetMonth = budgetMonthRepository.save(testBudgetMonth);
 
         testCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Food")
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
@@ -119,6 +134,7 @@ class BudgetCategoryRepositoryTest {
         budgetCategoryRepository.save(testCategory);
         BudgetCategory anotherCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Transport")
                 .limitTry(BigDecimal.valueOf(500))
                 .spentTry(BigDecimal.valueOf(400))
@@ -134,12 +150,14 @@ class BudgetCategoryRepositoryTest {
     void shouldHandleMultipleCategoriesForSameBudgetMonth() {
         BudgetCategory category1 = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Food")
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
                 .build();
         BudgetCategory category2 = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Transport")
                 .limitTry(BigDecimal.valueOf(500))
                 .spentTry(BigDecimal.valueOf(400))
@@ -156,12 +174,14 @@ class BudgetCategoryRepositoryTest {
     void shouldDistinguishBetweenDifferentCategories() {
         BudgetCategory foodCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Food")
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
                 .build();
         BudgetCategory entertainmentCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
+                .userProfile(testUserProfile)
                 .category("Entertainment")
                 .limitTry(BigDecimal.valueOf(300))
                 .spentTry(BigDecimal.valueOf(250))
