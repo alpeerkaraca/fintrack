@@ -10,6 +10,7 @@ import com.alpeerkaraca.fintrackserver.exception.AssetNotFoundException;
 import com.alpeerkaraca.fintrackserver.exception.UserNotFoundException;
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import com.alpeerkaraca.fintrackserver.repository.InvestmentAssetRepository;
 import com.alpeerkaraca.fintrackserver.repository.UserProfileRepository;
@@ -69,26 +70,26 @@ class InvestmentServiceTest {
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(10))
-                .avgCostTry(BigDecimal.valueOf(1500))
+                .avgCostOriginal(BigDecimal.valueOf(1500))
                 .type(AssetType.STOCK)
                 .build();
 
         createRequest = new InvestmentCreateRequest();
         createRequest.setSymbol("AAPL");
         createRequest.setQuantity(BigDecimal.valueOf(10));
-        createRequest.setAvgCostTry(BigDecimal.valueOf(1500));
+        createRequest.setAvgCost(BigDecimal.valueOf(1500));
         createRequest.setAssetType(AssetType.STOCK);
 
         updateRequest = new InvestmentUpdateRequest();
         updateRequest.setQuantity(BigDecimal.valueOf(15));
-        updateRequest.setAvgCostTry(BigDecimal.valueOf(1600));
+        updateRequest.setAvgCostOriginal(BigDecimal.valueOf(1600));
     }
 
     @Test
     void shouldGetUserPortfolio() {
         List<InvestmentAsset> assets = Arrays.asList(testAsset);
         when(assetRepository.findByUserProfileId(testUserId)).thenReturn(assets);
-        when(priceService.getInfo(any(), anyString())).thenReturn(
+        when(priceService.getInfo(any(), anyString(), any())).thenReturn(
                 new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000))
         );
 
@@ -112,7 +113,7 @@ class InvestmentServiceTest {
     void shouldAddInvestment() {
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(priceService.getInfo(AssetType.STOCK, "AAPL"))
+        when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
@@ -150,7 +151,7 @@ class InvestmentServiceTest {
     void shouldUpdateInvestment() {
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
-        when(priceService.getInfo(any(), anyString()))
+        when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, updateRequest, testAssetId);
@@ -167,7 +168,7 @@ class InvestmentServiceTest {
 
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
-        when(priceService.getInfo(any(), anyString()))
+        when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, partialUpdate, testAssetId);
@@ -214,7 +215,7 @@ class InvestmentServiceTest {
         createRequest.setQuantity(BigDecimal.ZERO);
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(priceService.getInfo(AssetType.STOCK, "AAPL"))
+        when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
@@ -229,7 +230,7 @@ class InvestmentServiceTest {
         createRequest.setSymbol("aapl");
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "aapl")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(priceService.getInfo(AssetType.STOCK, "aapl"))
+        when(priceService.getInfo(AssetType.STOCK, "aapl", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenAnswer(invocation -> {
             InvestmentAsset saved = invocation.getArgument(0);
@@ -249,20 +250,20 @@ class InvestmentServiceTest {
         
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "TRF")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(priceService.getInfo(AssetType.FUND, "TRF"))
+        when(priceService.getInfo(AssetType.FUND, "TRF", StockMarket.TEFAS))
                 .thenReturn(new InvestmentExternalDto("Turkey Fund", BigDecimal.valueOf(10)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
         InvestmentAssetDto result = investmentService.addInvestment(testUserId, createRequest);
 
         assertThat(result).isNotNull();
-        verify(priceService).getInfo(AssetType.FUND, "TRF");
+        verify(priceService).getInfo(AssetType.FUND, "TRF", StockMarket.TEFAS);
     }
 
     @Test
     void shouldCalculateProfitCorrectly() {
         when(assetRepository.findByUserProfileId(testUserId)).thenReturn(Arrays.asList(testAsset));
-        when(priceService.getInfo(AssetType.STOCK, "AAPL"))
+        when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
 
         List<InvestmentAssetDto> result = investmentService.getUserPortfolio(testUserId);
@@ -277,7 +278,7 @@ class InvestmentServiceTest {
         
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
-        when(priceService.getInfo(any(), anyString()))
+        when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, emptyUpdate, testAssetId);
