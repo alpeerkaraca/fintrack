@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,10 @@ class InvestmentAssetRepositoryTest {
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(100))
+                .avgCostOriginal(BigDecimal.valueOf(150))
+                .purchaseCurrency("USD")
+                .totalCostTry(BigDecimal.valueOf(450000))
+                .stockMarket(StockMarket.NASDAQ)
                 .type(AssetType.STOCK)
                 .userProfile(testUser)
                 .build();
@@ -110,7 +115,10 @@ class InvestmentAssetRepositoryTest {
                 .symbol("GOLD")
                 .name("Gram Altın")
                 .quantity(BigDecimal.valueOf(999999.99))
-                .totalCostTry(BigDecimal.valueOf(2500))
+                .avgCostOriginal(BigDecimal.valueOf(2500))
+                .purchaseCurrency("TRY")
+                .totalCostTry(BigDecimal.valueOf(2499999975.00))
+                .stockMarket(StockMarket.OTHER)
                 .type(AssetType.GOLD_SILVER)
                 .userProfile(testUser)
                 .build();

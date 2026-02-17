@@ -24,13 +24,17 @@ public class InvestmentCreateRequest {
     private BigDecimal quantity;
 
     @NotNull
-    @DecimalMin(value = "0.00", message = "avgCostTry must be non-negative")
+    @DecimalMin(value = "0.00", message = "avgCost must be non-negative")
     @Digits(integer = 20, fraction = 4)
     private BigDecimal avgCost;
 
     @NotNull
     private AssetType assetType;
 
+    /**
+     * Stock market where the investment is traded.
+     * If null, defaults to StockMarket.OTHER in the service layer.
+     */
     private StockMarket stockMarket;
 
 }
