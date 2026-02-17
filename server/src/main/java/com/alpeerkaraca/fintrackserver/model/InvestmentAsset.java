@@ -28,12 +28,21 @@ public class InvestmentAsset {
     @Column(nullable = false)
     private BigDecimal quantity;
 
-    @Column(nullable = false)
-    private BigDecimal avgCostTry;
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal avgCostOriginal;
+
+    @Column(nullable = false, length = 3)
+    private String purchaseCurrency;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalCostTry;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AssetType type;
+
+    @Enumerated(EnumType.STRING)
+    private StockMarket stockMarket;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_profile_id", nullable = false)

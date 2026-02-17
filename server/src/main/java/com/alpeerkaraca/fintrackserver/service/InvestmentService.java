@@ -8,7 +8,9 @@ import com.alpeerkaraca.fintrackserver.exception.AssetAlreadyExistsException;
 import com.alpeerkaraca.fintrackserver.exception.AssetDeleteException;
 import com.alpeerkaraca.fintrackserver.exception.AssetNotFoundException;
 import com.alpeerkaraca.fintrackserver.exception.UserNotFoundException;
+import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import com.alpeerkaraca.fintrackserver.repository.InvestmentAssetRepository;
 import com.alpeerkaraca.fintrackserver.repository.UserProfileRepository;
@@ -30,6 +32,7 @@ public class InvestmentService {
     private final InvestmentAssetRepository assetRepository;
     private final PriceService priceService;
     private final UserProfileRepository userProfileRepository;
+    private final MarketDataService marketDataService;
 
 
     public List<InvestmentAssetDto> getUserPortfolio(UUID userId) {
@@ -40,50 +43,65 @@ public class InvestmentService {
 
     @Transactional
     public InvestmentAssetDto addInvestment(UUID userId, @Valid InvestmentCreateRequest dto) {
-        try {
-            if (assetRepository.existsByUserProfileIdAndSymbol(userId, dto.getSymbol())) {
-                throw new AssetAlreadyExistsException("Asset with symbol " + dto.getSymbol() + " already exists in portfolio. Please update the existing asset instead of adding as new one.");
-            }
-            UserProfile userProfile = userProfileRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User profile not found for id: " + userId));
+        UserProfile userProfile = userProfileRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User profile not found for id: " + userId));
 
-            InvestmentExternalDto assetInfo = priceService.getInfo(dto.getAssetType(), dto.getSymbol());
-            InvestmentAsset newAsset = InvestmentAsset.builder()
-                    .userProfile(userProfile)
-                    .symbol(dto.getSymbol().toUpperCase())
-                    .name(assetInfo.name())
-                    .quantity(dto.getQuantity())
-                    .avgCostTry(dto.getAvgCostTry())
-                    .type(dto.getAssetType())
-                    .build();
-            InvestmentAsset savedAsset = assetRepository.save(newAsset);
-            log.info("Added new asset for user {}: {}", userId, savedAsset.toString());
-            return convertToDto(savedAsset);
-        } catch (AssetAlreadyExistsException e) {
-            throw e;
+        if (assetRepository.existsByUserProfileIdAndSymbol(userId, dto.getSymbol())) {
+            throw new AssetAlreadyExistsException("Asset with symbol " + dto.getSymbol() + " already exists in portfolio. Please update the existing asset instead of adding as new one.");
         }
+        if (dto.getStockMarket() == null) dto.setStockMarket(StockMarket.OTHER);
+        InvestmentExternalDto assetInfo = priceService.getInfo(dto.getAssetType(), dto.getSymbol().toUpperCase(), dto.getStockMarket());
+        BigDecimal rate = dto.getStockMarket().getCurrency().equalsIgnoreCase("TRY") ?
+                BigDecimal.ONE : marketDataService.getUsdToTryInfo().price();
+        BigDecimal totalCostTry = dto.getAvgCost().multiply(dto.getQuantity()).multiply(rate);
+
+        InvestmentAsset newAsset = InvestmentAsset.builder()
+                .userProfile(userProfile)
+                .symbol(dto.getAssetType() == AssetType.GOLD_SILVER ? dto.getSymbol().toLowerCase() : dto.getSymbol().toUpperCase())
+                .name(assetInfo.name())
+                .quantity(dto.getQuantity())
+                .avgCostOriginal(dto.getAvgCost())
+                .purchaseCurrency(dto.getStockMarket().getCurrency())
+                .totalCostTry(totalCostTry)
+                .type(dto.getAssetType())
+                .stockMarket(dto.getStockMarket())
+                .build();
+        InvestmentAsset savedAsset = assetRepository.save(newAsset);
+        log.info("Added new asset for user {}: {}", userId, savedAsset.getSymbol());
+        return convertToDto(savedAsset);
+
     }
 
     @Transactional
     public InvestmentAssetDto updateInvestment(UUID userId, @Valid InvestmentUpdateRequest dto, UUID assetId) {
-        try {
-            InvestmentAsset existingInvestment = assetRepository.findByIdAndUserProfileId(assetId, userId)
-                    .orElseThrow(() -> new AssetNotFoundException("Asset not found for id: " + assetId));
+        InvestmentAsset asset = assetRepository.findByIdAndUserProfileId(assetId, userId)
+                .orElseThrow(() -> new AssetNotFoundException("Asset not found for id: " + assetId));
 
-            if (dto.getQuantity() != null) {
-                existingInvestment.setQuantity(dto.getQuantity());
-            }
-            if (dto.getAvgCostTry() != null) {
-                existingInvestment.setAvgCostTry(dto.getAvgCostTry());
-            }
-
-            return convertToDto(existingInvestment);
-        } catch (AssetNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error updating asset for user {}: {}", userId, e.getMessage());
-            throw new RuntimeException("Failed to update asset. Please try again later.");
+        if (dto.getQuantity() != null) {
+            asset.setQuantity(dto.getQuantity());
         }
+        if (dto.getAvgCostOriginal() != null && dto.getAvgCostOriginal().compareTo(BigDecimal.ZERO) > 0) {
+            asset.setAvgCostOriginal(dto.getAvgCostOriginal());
+        }
+        if (dto.getTotalCostTry() != null) {
+            asset.setTotalCostTry(dto.getTotalCostTry());
+        }
+
+
+        BigDecimal rate = BigDecimal.ONE;
+        if ("USD".equalsIgnoreCase(asset.getPurchaseCurrency())) {
+            rate = marketDataService.getUsdToTryInfo().price();
+        }
+
+        asset.setTotalCostTry(asset.getQuantity()
+                .multiply(asset.getAvgCostOriginal())
+                .multiply(rate));
+
+        log.info("Updated asset {}: New AvgCostOriginal: {}, New TotalCostTry: {}",
+                asset.getSymbol(), asset.getAvgCostOriginal(), asset.getTotalCostTry());
+
+        return convertToDto(asset);
     }
+
     @Transactional
     public void deleteInvestment(UUID userId, UUID assetId) {
         try {
@@ -101,13 +119,16 @@ public class InvestmentService {
 
 
     private InvestmentAssetDto convertToDto(InvestmentAsset asset) {
-        BigDecimal currentPrice = getCurrentPrice(asset);
-        BigDecimal totalValue = asset.getQuantity().multiply(currentPrice);
-        BigDecimal totalCost = asset.getQuantity().multiply(asset.getAvgCostTry());
-        BigDecimal profitLoss = totalValue.subtract(totalCost);
+        BigDecimal currentPriceTry = getCurrentPrice(asset);
+        BigDecimal currentPriceOriginal = asset.getStockMarket().getCurrency().equalsIgnoreCase("TRY") ?
+                currentPriceTry : currentPriceTry.divide(marketDataService.getUsdToTryInfo().price(), 2, RoundingMode.HALF_UP);
+
+        BigDecimal totalValue = asset.getQuantity().multiply(currentPriceTry);
+        BigDecimal profitLoss = totalValue.subtract(asset.getTotalCostTry());
+
         BigDecimal changePercent = BigDecimal.ZERO;
-        if (asset.getAvgCostTry().compareTo(BigDecimal.ZERO) > 0) {
-            changePercent = profitLoss.divide(totalCost, 2, RoundingMode.HALF_UP)
+        if (asset.getTotalCostTry().compareTo(BigDecimal.ZERO) > 0) {
+            changePercent = profitLoss.divide(asset.getTotalCostTry(), 2, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
         return InvestmentAssetDto.builder()
@@ -115,20 +136,31 @@ public class InvestmentService {
                 .symbol(asset.getSymbol())
                 .name(asset.getName())
                 .quantity(asset.getQuantity())
-                .avgCostTry(asset.getAvgCostTry())
-                .currentPriceTry(currentPrice)
+                .avgCostTry(asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP))
+                .currentPriceTry(currentPriceTry)
+                .avgCostOriginal(asset.getAvgCostOriginal())
+                .currentPriceOriginal(currentPriceOriginal)
+                .originalCurrency(asset.getStockMarket().getCurrency())
                 .profitLossTry(profitLoss)
                 .changePercent(changePercent)
                 .assetType(asset.getType())
+                .stockMarket(asset.getStockMarket())
+                .stockMarketDisplayName(asset.getStockMarket().getLabel())
                 .build();
     }
 
     private BigDecimal getCurrentPrice(InvestmentAsset asset) {
         try {
-            return priceService.getInfo(asset.getType(), asset.getSymbol()).price();
+            InvestmentExternalDto info = priceService.getInfo(asset.getType(), asset.getSymbol(), asset.getStockMarket());
+            BigDecimal price = info.price();
+            if ("USD".equals(asset.getStockMarket().getCurrency())) {
+                BigDecimal usdRate = priceService.getInfo(AssetType.CURRENCY, null, null).price();
+                price = price.multiply(usdRate);
+            }
+            return price;
         } catch (Exception e) {
             log.warn("Failed to fetch current price for asset {}: {}", asset.getSymbol(), e.getMessage());
-            return asset.getAvgCostTry();
+            return asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP);
         }
     }
 }
