@@ -1,20 +1,14 @@
 package com.alpeerkaraca.fintrackserver.dto.frontend;
 
 import com.alpeerkaraca.fintrackserver.model.AssetType;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.UUID;
-
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 @Data
 @NoArgsConstructor
@@ -31,9 +25,12 @@ public class InvestmentCreateRequest {
 
     @NotNull
     @DecimalMin(value = "0.00", message = "avgCostTry must be non-negative")
-    @Digits(integer = 20, fraction = 2)
-    private BigDecimal avgCostTry;
+    @Digits(integer = 20, fraction = 4)
+    private BigDecimal avgCost;
 
     @NotNull
     private AssetType assetType;
+
+    private StockMarket stockMarket;
+
 }

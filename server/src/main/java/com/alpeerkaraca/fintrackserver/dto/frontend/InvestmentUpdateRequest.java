@@ -20,8 +20,13 @@ public class InvestmentUpdateRequest {
     @Min(value = 0, message = "quantity must be non-negative")
     private BigDecimal quantity;
 
-    @DecimalMin(value = "0.00", message = "avgCostTry must be non-negative")
+    @DecimalMin(value = "0.00", message = "totalCostTry must be non-negative")
     @Digits(integer = 20, fraction = 4)
-    private BigDecimal avgCostTry;
+    private BigDecimal totalCostTry;
 
+    @DecimalMin(value = "0.00", message = "avgCostOriginal must be non-negative")
+    @Digits(integer = 20, fraction = 4)
+    private BigDecimal avgCostOriginal;
+
+    private String purchaseCurrency;
 }

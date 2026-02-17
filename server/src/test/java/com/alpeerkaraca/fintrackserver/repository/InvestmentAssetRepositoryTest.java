@@ -47,7 +47,6 @@ class InvestmentAssetRepositoryTest {
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(100))
-                .avgCostTry(BigDecimal.valueOf(150))
                 .type(AssetType.STOCK)
                 .userProfile(testUser)
                 .build();
@@ -75,13 +74,13 @@ class InvestmentAssetRepositoryTest {
     void shouldUpdateInvestmentMetadata() {
         InvestmentAsset saved = investmentAssetRepository.save(testAsset);
         saved.setQuantity(BigDecimal.valueOf(200));
-        saved.setAvgCostTry(BigDecimal.valueOf(175));
+        saved.setAvgCostOriginal(BigDecimal.valueOf(175));
 
         investmentAssetRepository.save(saved);
 
         InvestmentAsset updated = investmentAssetRepository.findById(saved.getId()).get();
         assertThat(updated.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(200));
-        assertThat(updated.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(175));
+        assertThat(updated.getAvgCostOriginal()).isEqualByComparingTo(BigDecimal.valueOf(175));
     }
 
     @Test
@@ -111,7 +110,7 @@ class InvestmentAssetRepositoryTest {
                 .symbol("GOLD")
                 .name("Gram Altın")
                 .quantity(BigDecimal.valueOf(999999.99))
-                .avgCostTry(BigDecimal.valueOf(2500))
+                .totalCostTry(BigDecimal.valueOf(2500))
                 .type(AssetType.GOLD_SILVER)
                 .userProfile(testUser)
                 .build();
