@@ -1,6 +1,7 @@
 package com.alpeerkaraca.fintrackserver.dto;
 
 import com.alpeerkaraca.fintrackserver.model.AssetType;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -55,4 +56,11 @@ public class InvestmentAssetDto {
 
     @NotNull
     private AssetType assetType;
+
+    private StockMarket stockMarket;
+
+    private String stockMarketDisplayName;
+    private String originalCurrency;
+    private BigDecimal avgCostOriginal;
+    private BigDecimal currentPriceOriginal;
 }

@@ -1,6 +1,7 @@
 package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.*;
+import com.alpeerkaraca.fintrackserver.model.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +66,7 @@ class DashboardServiceTest {
         );
 
         BudgetCategoryResponse category = BudgetCategoryResponse.builder()
-                .category("Food")
+                .category(Category.FOOD)
                 .limitTry(BigDecimal.valueOf(5000))
                 .spentTry(BigDecimal.valueOf(3000))
                 .alertLevel("STABLE")
