@@ -49,9 +49,18 @@ public class InvestmentService {
             throw new AssetAlreadyExistsException("Asset with symbol " + dto.getSymbol() + " already exists in portfolio. Please update the existing asset instead of adding as new one.");
         }
         if (dto.getStockMarket() == null) dto.setStockMarket(StockMarket.OTHER);
-        InvestmentExternalDto assetInfo = priceService.getInfo(dto.getAssetType(), dto.getSymbol().toUpperCase(), dto.getStockMarket());
-        BigDecimal rate = dto.getStockMarket().getCurrency().equalsIgnoreCase("TRY") ?
-                BigDecimal.ONE : marketDataService.getUsdToTryInfo().price();
+        InvestmentExternalDto assetInfo = priceService.getInfo(dto.getAssetType(), dto.getSymbol().toUpperCase());
+        
+        String purchaseCurrency = dto.getStockMarket().getCurrency();
+        BigDecimal rate;
+        if ("TRY".equalsIgnoreCase(purchaseCurrency)) {
+            rate = BigDecimal.ONE;
+        } else if ("USD".equalsIgnoreCase(purchaseCurrency)) {
+            rate = marketDataService.getUsdToTryInfo().price();
+        } else {
+            // For any future currencies, default to USD/TRY rate
+            rate = marketDataService.getUsdToTryInfo().price();
+        }
         BigDecimal totalCostTry = dto.getAvgCost().multiply(dto.getQuantity()).multiply(rate);
 
         InvestmentAsset newAsset = InvestmentAsset.builder()
@@ -82,13 +91,16 @@ public class InvestmentService {
         if (dto.getAvgCostOriginal() != null && dto.getAvgCostOriginal().compareTo(BigDecimal.ZERO) > 0) {
             asset.setAvgCostOriginal(dto.getAvgCostOriginal());
         }
-        if (dto.getTotalCostTry() != null) {
-            asset.setTotalCostTry(dto.getTotalCostTry());
-        }
 
-
-        BigDecimal rate = BigDecimal.ONE;
-        if ("USD".equalsIgnoreCase(asset.getPurchaseCurrency())) {
+        // Recalculate totalCostTry based on quantity and avgCostOriginal
+        String purchaseCurrency = asset.getPurchaseCurrency();
+        BigDecimal rate;
+        if (purchaseCurrency != null && "TRY".equalsIgnoreCase(purchaseCurrency)) {
+            rate = BigDecimal.ONE;
+        } else if (purchaseCurrency != null && "USD".equalsIgnoreCase(purchaseCurrency)) {
+            rate = marketDataService.getUsdToTryInfo().price();
+        } else {
+            // For any future currencies or null, default to USD/TRY rate
             rate = marketDataService.getUsdToTryInfo().price();
         }
 
@@ -120,8 +132,12 @@ public class InvestmentService {
 
     private InvestmentAssetDto convertToDto(InvestmentAsset asset) {
         BigDecimal currentPriceTry = getCurrentPrice(asset);
-        BigDecimal currentPriceOriginal = asset.getStockMarket().getCurrency().equalsIgnoreCase("TRY") ?
-                currentPriceTry : currentPriceTry.divide(marketDataService.getUsdToTryInfo().price(), 2, RoundingMode.HALF_UP);
+        BigDecimal currentPriceOriginal;
+        if (asset.getStockMarket() != null && asset.getStockMarket().getCurrency().equalsIgnoreCase("TRY")) {
+            currentPriceOriginal = currentPriceTry;
+        } else {
+            currentPriceOriginal = currentPriceTry.divide(marketDataService.getUsdToTryInfo().price(), 2, RoundingMode.HALF_UP);
+        }
 
         BigDecimal totalValue = asset.getQuantity().multiply(currentPriceTry);
         BigDecimal profitLoss = totalValue.subtract(asset.getTotalCostTry());
@@ -131,35 +147,48 @@ public class InvestmentService {
             changePercent = profitLoss.divide(asset.getTotalCostTry(), 2, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
+        
+        BigDecimal avgCostTry = BigDecimal.ZERO;
+        if (asset.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            avgCostTry = asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP);
+        }
+        
+        String originalCurrency = asset.getStockMarket() != null ? asset.getStockMarket().getCurrency() : "TRY";
+        StockMarket stockMarket = asset.getStockMarket() != null ? asset.getStockMarket() : StockMarket.OTHER;
+        String stockMarketDisplayName = asset.getStockMarket() != null ? asset.getStockMarket().getLabel() : "Other";
+        
         return InvestmentAssetDto.builder()
                 .id(asset.getId())
                 .symbol(asset.getSymbol())
                 .name(asset.getName())
                 .quantity(asset.getQuantity())
-                .avgCostTry(asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP))
+                .avgCostTry(avgCostTry)
                 .currentPriceTry(currentPriceTry)
                 .avgCostOriginal(asset.getAvgCostOriginal())
                 .currentPriceOriginal(currentPriceOriginal)
-                .originalCurrency(asset.getStockMarket().getCurrency())
+                .originalCurrency(originalCurrency)
                 .profitLossTry(profitLoss)
                 .changePercent(changePercent)
                 .assetType(asset.getType())
-                .stockMarket(asset.getStockMarket())
-                .stockMarketDisplayName(asset.getStockMarket().getLabel())
+                .stockMarket(stockMarket)
+                .stockMarketDisplayName(stockMarketDisplayName)
                 .build();
     }
 
     private BigDecimal getCurrentPrice(InvestmentAsset asset) {
         try {
-            InvestmentExternalDto info = priceService.getInfo(asset.getType(), asset.getSymbol(), asset.getStockMarket());
+            InvestmentExternalDto info = priceService.getInfo(asset.getType(), asset.getSymbol());
             BigDecimal price = info.price();
-            if ("USD".equals(asset.getStockMarket().getCurrency())) {
-                BigDecimal usdRate = priceService.getInfo(AssetType.CURRENCY, null, null).price();
+            if (asset.getStockMarket() != null && "USD".equals(asset.getStockMarket().getCurrency())) {
+                BigDecimal usdRate = priceService.getInfo(AssetType.CURRENCY, null).price();
                 price = price.multiply(usdRate);
             }
             return price;
         } catch (Exception e) {
             log.warn("Failed to fetch current price for asset {}: {}", asset.getSymbol(), e.getMessage());
+            if (asset.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                return BigDecimal.ZERO;
+            }
             return asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP);
         }
     }

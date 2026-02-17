@@ -42,6 +42,7 @@ public class InvestmentAsset {
     private AssetType type;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private StockMarket stockMarket;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
