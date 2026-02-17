@@ -75,7 +75,7 @@ class BudgetServiceTest {
 
         testCategory = BudgetCategory.builder()
                 .id(UUID.randomUUID())
-                .category("Food")
+                .category(Category.FOOD)
                 .limitTry(BigDecimal.valueOf(5000))
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUser)
@@ -139,7 +139,7 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto transaction = new TransactionDto();
-        transaction.setCategory("Food");
+        transaction.setCategory(Category.FOOD);
         transaction.setAmountTry(BigDecimal.valueOf(3000));
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))
@@ -172,7 +172,7 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto transaction = new TransactionDto();
-        transaction.setCategory("Food");
+        transaction.setCategory(Category.FOOD);
         transaction.setAmountTry(BigDecimal.valueOf(4500)); // 90% of limit
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))
@@ -190,7 +190,7 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto transaction = new TransactionDto();
-        transaction.setCategory("Food");
+        transaction.setCategory(Category.FOOD);
         transaction.setAmountTry(BigDecimal.valueOf(3700)); // 74% of limit
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))
@@ -208,7 +208,7 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto transaction = new TransactionDto();
-        transaction.setCategory("Food");
+        transaction.setCategory(Category.FOOD);
         transaction.setAmountTry(BigDecimal.valueOf(2000)); // 40% of limit
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))
@@ -223,7 +223,7 @@ class BudgetServiceTest {
     void shouldHandleMultipleCategories() {
         BudgetCategory category2 = BudgetCategory.builder()
                 .id(UUID.randomUUID())
-                .category("Transport")
+                .category(Category.TRANSPORT)
                 .limitTry(BigDecimal.valueOf(3000))
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUser)
@@ -307,11 +307,11 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto foodTx = new TransactionDto();
-        foodTx.setCategory("Food");
+        foodTx.setCategory(Category.FOOD);
         foodTx.setAmountTry(BigDecimal.valueOf(1000));
         
         TransactionDto transportTx = new TransactionDto();
-        transportTx.setCategory("Transport");
+        transportTx.setCategory(Category.TRANSPORT);
         transportTx.setAmountTry(BigDecimal.valueOf(500));
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))
@@ -330,7 +330,7 @@ class BudgetServiceTest {
                 .thenReturn(Optional.of(testBudgetMonth));
         
         TransactionDto transaction = new TransactionDto();
-        transaction.setCategory("FOOD"); // uppercase
+        transaction.setCategory(Category.FOOD);
         transaction.setAmountTry(BigDecimal.valueOf(1000));
         
         when(transactionService.getFilteredTransactions(eq(testUserId), any(TransactionFilter.class)))

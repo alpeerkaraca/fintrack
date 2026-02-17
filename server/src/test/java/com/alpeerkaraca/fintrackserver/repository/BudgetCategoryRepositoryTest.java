@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.BudgetCategory;
 import com.alpeerkaraca.fintrackserver.model.BudgetMonth;
+import com.alpeerkaraca.fintrackserver.model.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ class BudgetCategoryRepositoryTest {
         testCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Food")
+                .category(Category.FOOD)
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
                 .build();
@@ -126,7 +127,7 @@ class BudgetCategoryRepositoryTest {
 
         BudgetCategory found = budgetCategoryRepository.findById(testCategory.getId()).get();
 
-        assertThat(found.getCategory()).isEqualTo("Food");
+        assertThat(found.getCategory()).isEqualTo(Category.FOOD);
     }
 
     @Test
@@ -135,7 +136,7 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory anotherCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Transport")
+                .category(Category.TRANSPORT)
                 .limitTry(BigDecimal.valueOf(500))
                 .spentTry(BigDecimal.valueOf(400))
                 .build();
@@ -151,14 +152,14 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory category1 = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Food")
+                .category(Category.FOOD)
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
                 .build();
         BudgetCategory category2 = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Transport")
+                .category(Category.TRANSPORT)
                 .limitTry(BigDecimal.valueOf(500))
                 .spentTry(BigDecimal.valueOf(400))
                 .build();
@@ -175,14 +176,14 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory foodCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Food")
+                .category(Category.FOOD)
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(800))
                 .build();
         BudgetCategory entertainmentCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
                 .userProfile(testUserProfile)
-                .category("Entertainment")
+                .category(Category.ENTERTAINMENT)
                 .limitTry(BigDecimal.valueOf(300))
                 .spentTry(BigDecimal.valueOf(250))
                 .build();
@@ -193,8 +194,8 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory foundFood = budgetCategoryRepository.findById(savedFood.getId()).get();
         BudgetCategory foundEntertainment = budgetCategoryRepository.findById(savedEntertainment.getId()).get();
 
-        assertThat(foundFood.getCategory()).isEqualTo("Food");
-        assertThat(foundEntertainment.getCategory()).isEqualTo("Entertainment");
+        assertThat(foundFood.getCategory().getLabel()).isEqualTo("Food");
+        assertThat(foundEntertainment.getCategory().getLabel()).isEqualTo("Entertainment");
         assertThat(foundFood.getLimitTry()).isNotEqualByComparingTo(foundEntertainment.getLimitTry());
     }
 
@@ -202,7 +203,7 @@ class BudgetCategoryRepositoryTest {
     void shouldHandleZeroSpentAmount() {
         BudgetCategory categoryNoSpend = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
-                .category("Savings")
+                .category(Category.SAVINGS)
                 .limitTry(BigDecimal.valueOf(2000))
                 .spentTry(BigDecimal.ZERO)
                 .build();
@@ -217,7 +218,7 @@ class BudgetCategoryRepositoryTest {
     void shouldHandleSpentEqualToLimit() {
         BudgetCategory maxSpendCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
-                .category("Budget Category")
+                .category(Category.SHOPPING)
                 .limitTry(BigDecimal.valueOf(1000))
                 .spentTry(BigDecimal.valueOf(1000))
                 .build();
@@ -232,7 +233,7 @@ class BudgetCategoryRepositoryTest {
     void shouldHandleLargeMonetaryValues() {
         BudgetCategory largeCategory = BudgetCategory.builder()
                 .budgetMonth(testBudgetMonth)
-                .category("High Value")
+                .category(Category.INVESTMENT)
                 .limitTry(BigDecimal.valueOf(999999.99))
                 .spentTry(BigDecimal.valueOf(500000.00))
                 .build();
