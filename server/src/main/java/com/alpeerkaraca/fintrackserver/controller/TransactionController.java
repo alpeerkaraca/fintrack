@@ -1,23 +1,22 @@
 package com.alpeerkaraca.fintrackserver.controller;
 
+import com.alpeerkaraca.fintrackserver.dto.ApiResponse;
+import com.alpeerkaraca.fintrackserver.dto.TransactionDto;
+import com.alpeerkaraca.fintrackserver.dto.TransactionFilter;
+import com.alpeerkaraca.fintrackserver.dto.frontend.CategoryResponse;
+import com.alpeerkaraca.fintrackserver.model.Category;
+import com.alpeerkaraca.fintrackserver.security.UserPrincipal;
+import com.alpeerkaraca.fintrackserver.service.TransactionService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.alpeerkaraca.fintrackserver.dto.ApiResponse;
-import com.alpeerkaraca.fintrackserver.dto.TransactionDto;
-import com.alpeerkaraca.fintrackserver.dto.TransactionFilter;
-import com.alpeerkaraca.fintrackserver.security.UserPrincipal;
-import com.alpeerkaraca.fintrackserver.service.TransactionService;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/transactions")

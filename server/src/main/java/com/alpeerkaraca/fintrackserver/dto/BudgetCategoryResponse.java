@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.dto;
 
+import com.alpeerkaraca.fintrackserver.model.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetCategoryResponse {
-    String category;
+    Category category;
     BigDecimal limitTry;
     BigDecimal spentTry;
     String alertLevel;

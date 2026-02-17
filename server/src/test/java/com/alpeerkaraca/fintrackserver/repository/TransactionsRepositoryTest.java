@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.repository;
 
+import com.alpeerkaraca.fintrackserver.model.Category;
 import com.alpeerkaraca.fintrackserver.model.PaymentMethod;
 import com.alpeerkaraca.fintrackserver.model.Transaction;
 import com.alpeerkaraca.fintrackserver.model.TransactionType;
@@ -46,7 +47,7 @@ class TransactionsRepositoryTest {
                 .title("Grocery Shopping")
                 .amountTry(BigDecimal.valueOf(250))
                 .date(today)
-                .category("Food")
+                .category(Category.FOOD)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .userProfile(testUserProfile)
@@ -163,7 +164,7 @@ class TransactionsRepositoryTest {
                 .title("Restaurant")
                 .amountTry(BigDecimal.valueOf(100))
                 .date(today)
-                .category("Dining")
+                .category(Category.FOOD)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
@@ -180,7 +181,7 @@ class TransactionsRepositoryTest {
                 .title("Salary")
                 .amountTry(BigDecimal.valueOf(5000))
                 .date(today)
-                .category("Salary")
+                .category(Category.INCOME)
                 .transactionType(TransactionType.INCOME)
                 .paymentMethod(PaymentMethod.TRANSFER)
                 .build();
@@ -197,7 +198,7 @@ class TransactionsRepositoryTest {
                 .title("Gas")
                 .amountTry(BigDecimal.valueOf(75))
                 .date(today)
-                .category("Transport")
+                .category(Category.TRANSPORT)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();
@@ -214,7 +215,7 @@ class TransactionsRepositoryTest {
                 .title("Purchase")
                 .amountTry(BigDecimal.valueOf(500))
                 .date(today)
-                .category("Shopping")
+                .category(Category.SHOPPING)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(null)
                 .build();
@@ -231,7 +232,7 @@ class TransactionsRepositoryTest {
                 .title("Cash Purchase")
                 .amountTry(BigDecimal.valueOf(50))
                 .date(today)
-                .category("Shopping")
+                .category(Category.SHOPPING)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();
@@ -239,7 +240,7 @@ class TransactionsRepositoryTest {
                 .title("Card Purchase")
                 .amountTry(BigDecimal.valueOf(200))
                 .date(today)
-                .category("Electronics")
+                .category(Category.ELECTRONICS)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
@@ -260,7 +261,7 @@ class TransactionsRepositoryTest {
                 .title("Adjustment")
                 .amountTry(BigDecimal.ZERO)
                 .date(today)
-                .category("Other")
+                .category(Category.OTHER)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();
@@ -277,7 +278,7 @@ class TransactionsRepositoryTest {
                 .title("Property Purchase")
                 .amountTry(BigDecimal.valueOf(999999.99))
                 .date(today)
-                .category("Real Estate")
+                .category(Category.INVESTMENT)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
@@ -295,7 +296,7 @@ class TransactionsRepositoryTest {
                 .title("Past Purchase")
                 .amountTry(BigDecimal.valueOf(100))
                 .date(pastDate)
-                .category("Shopping")
+                .category(Category.SHOPPING)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();
@@ -313,7 +314,7 @@ class TransactionsRepositoryTest {
                 .title("Planned Expense")
                 .amountTry(BigDecimal.valueOf(500))
                 .date(futureDate)
-                .category("Shopping")
+                .category(Category.SHOPPING)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();
@@ -330,7 +331,7 @@ class TransactionsRepositoryTest {
                 .title("Transaction 1")
                 .amountTry(BigDecimal.valueOf(100))
                 .date(today)
-                .category("Category 1")
+                .category(Category.OTHER)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();
@@ -338,7 +339,7 @@ class TransactionsRepositoryTest {
                 .title("Transaction 2")
                 .amountTry(BigDecimal.valueOf(500))
                 .date(today)
-                .category("Category 2")
+                .category(Category.OTHER)
                 .transactionType(TransactionType.INCOME)
                 .paymentMethod(PaymentMethod.TRANSFER)
                 .build();
@@ -372,7 +373,7 @@ class TransactionsRepositoryTest {
                 .title("Precise Amount")
                 .amountTry(BigDecimal.valueOf(123.45))
                 .date(today)
-                .category("Precise")
+                .category(Category.OTHER)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CARD)
                 .build();

@@ -128,7 +128,7 @@ public class BudgetService {
 
         return categoryList.stream().map(cat -> {
             BigDecimal totalSpent = monthlyTransactions.stream()
-                    .filter(t -> t.getCategory() != null && t.getCategory().equalsIgnoreCase(cat.getCategory()))
+                    .filter(t -> t.getCategory() != null && t.getCategory().getLabel().equalsIgnoreCase(cat.getCategory().getLabel()))
                     .map(TransactionDto::getAmountTry)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
