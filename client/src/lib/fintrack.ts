@@ -19,6 +19,20 @@ export interface Transaction {
   installmentMeta?: InstallmentMeta;
 }
 
+export type CategoryMeta = {
+  id: string;
+  label: string;
+  icon?: string;
+};
+
+export type StockMarketMeta = {
+  id: string;
+  label: string;
+  suffix: string;
+  currency: string;
+  supportedAssetTypes: string[];
+};
+
 export interface BudgetCategory {
   category: string;
   limitTry: number;
@@ -35,6 +49,7 @@ export interface BudgetMonth {
 }
 
 export interface InvestmentAsset {
+  id?: string;
   symbol: string;
   name: string;
   quantity: number;
@@ -42,6 +57,12 @@ export interface InvestmentAsset {
   currentPriceTry: number;
   changePercent: number;
   profitLossTry: number;
+  assetType?: string;
+  stockMarket?: string;
+  stockMarketDisplayName?: string;
+  originalCurrency?: string;
+  avgCostOriginal?: number;
+  currentPriceOriginal?: number;
 }
 
 export const USD_TRY_RATE :number = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json")
@@ -348,7 +369,31 @@ export const formatCurrency = (value: number, currency = "TRY") =>
   new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  }).format(value);
+
+export const formatCurrencyWithPrecision = (
+  value: number,
+  currency = "TRY",
+  fractionDigits = 4,
+) =>
+  new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(value);
+
+export const formatCurrencyTrimZeros = (
+  value: number,
+  currency = "TRY",
+  maxFractionDigits = 4,
+) =>
+  new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFractionDigits,
   }).format(value);
 
 export const formatNumber = (value: number) =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { USD_TRY_RATE } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
 import { authFetch, signOut } from "@/lib/auth";
 import { parseApiResponse } from "@/lib/api";
@@ -30,39 +31,41 @@ const isActivePath = (pathname: string, href: string) => {
   return pathname.startsWith(href);
 };
 
-export default function AppShell({ children }: { children: ReactNode }) {
+export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAuthPage = pathname === "/login" || pathname === "/register";
-  const [usdTryRate, setUsdTryRate] = useState<number | null>(null);
+  const [usdRate, setUsdRate] = useState<number | null>(null);
+  const [isRateLoading, setIsRateLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthPage) {
-      return;
-    }
+    let isActive = true;
 
-    let cancelled = false;
-
-    const fetchUsdTry = async () => {
+    const loadRate = async () => {
+      setIsRateLoading(true);
       try {
         const response = await authFetch("/api/v1/market-data/usd-try");
         const payload = await parseApiResponse<{ usdTry: number }>(response);
-        if (!cancelled) {
-          setUsdTryRate(payload.usdTry);
+        const rate = payload?.usdTry;
+        if (isActive) {
+          setUsdRate(typeof rate === "number" ? rate : USD_TRY_RATE);
         }
       } catch {
-        if (!cancelled) {
-          setUsdTryRate(null);
+        if (isActive) {
+          setUsdRate(USD_TRY_RATE);
+        }
+      } finally {
+        if (isActive) {
+          setIsRateLoading(false);
         }
       }
     };
 
-    void fetchUsdTry();
-
+    loadRate();
     return () => {
-      cancelled = true;
+      isActive = false;
     };
-  }, [isAuthPage]);
+  }, []);
 
   if (isAuthPage) {
     return <main className="min-h-screen bg-background text-foreground">{children}</main>;
@@ -111,14 +114,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-2 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold">USD/TRY</p>
-                  <p className="text-2xl font-semibold">
-                    {usdTryRate !== null ? usdTryRate.toFixed(4) : "--"}
-                  </p>
+                  {isRateLoading ? (
+                    <div className="mt-1 h-7 w-20 rounded-lg bg-muted/60 animate-pulse" />
+                  ) : (
+                    <p className="text-2xl font-semibold">
+                      {(usdRate ?? USD_TRY_RATE).toFixed(4)}
+                    </p>
+                  )}
                 </div>
                 <BadgeDollarSign className="h-6 w-6 text-primary" />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Live market data from backend.
+                Updated once a day.
               </p>
             </div>
             <button

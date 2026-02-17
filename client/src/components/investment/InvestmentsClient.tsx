@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
+  Coins,
+  DollarSign,
   Edit2,
   Lock,
   Plus,
+  TurkishLira,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -18,7 +21,12 @@ import {
   Tooltip,
 } from "recharts";
 
-import { formatCurrency, formatNumber, type InvestmentAsset } from "@/lib/fintrack";
+import {
+  formatCurrency,
+  formatCurrencyTrimZeros,
+  formatNumber,
+  type InvestmentAsset,
+} from "@/lib/fintrack";
 import { authFetch } from "@/lib/auth";
 import { parseApiResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -26,7 +34,6 @@ import FeedbackModal from "@/components/ui/FeedbackModal";
 
 type InvestmentAssetWithType = InvestmentAsset & {
   id?: string;
-  assetType?: string;
 };
 
 type SupportedAssetOption = {
@@ -38,7 +45,26 @@ type SupportedAssets = Partial<
   Record<"CURRENCY" | "GOLD_SILVER" | "FUND" | "STOCK", SupportedAssetOption[]>
 >;
 
+type StockMarketOption = {
+  id: string;
+  label: string;
+  suffix: string;
+  currency: string;
+  supportedAssetTypes: string[];
+};
+
 const CHART_COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
+const formatAssetName = (name: string) =>
+  name.length > 30 ? `${name.slice(0, 30).trim()}...` : name;
+const getCurrencyIcon = (currency?: string) => {
+  if (currency === "USD") {
+    return DollarSign;
+  }
+  if (currency === "TRY") {
+    return TurkishLira;
+  }
+  return Coins;
+};
 
 export default function InvestmentsClient() {
   const [assets, setAssets] = useState<InvestmentAssetWithType[]>([]);
@@ -54,17 +80,26 @@ export default function InvestmentsClient() {
   >(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [supportedAssets, setSupportedAssets] = useState<SupportedAssets>({});
+  const [stockMarkets, setStockMarkets] = useState<StockMarketOption[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<InvestmentAssetWithType | null>(null);
   const [confirmAsset, setConfirmAsset] = useState<InvestmentAssetWithType | null>(null);
 
   const [formData, setFormData] = useState({
     assetType: "FUND",
+    stockMarket: "",
     symbol: "",
     quantity: "",
-    avgCostTry: "",
+    avgCost: "",
   });
   const isEditing = Boolean(editingAsset);
+  const requiresMarket = formData.assetType === "FUND" || formData.assetType === "STOCK";
+  const availableMarkets = stockMarkets.filter((market) =>
+    market.supportedAssetTypes.includes(formData.assetType),
+  );
+  const selectedMarket = stockMarkets.find(
+    (market) => market.id === formData.stockMarket,
+  );
 
   const openModal = (type: "success" | "error", message: string, title?: string) => {
     setModal({
@@ -137,6 +172,29 @@ export default function InvestmentsClient() {
     };
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadStockMarkets = async () => {
+      try {
+        const response = await authFetch("/api/v1/metadata/stock-markets");
+        const payload = await parseApiResponse<StockMarketOption[]>(response);
+        if (isActive) {
+          setStockMarkets(payload ?? []);
+        }
+      } catch {
+        if (isActive) {
+          setStockMarkets([]);
+        }
+      }
+    };
+
+    loadStockMarkets();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const totalInvested = assets.reduce(
     (sum, asset) => sum + asset.avgCostTry * asset.quantity,
     0,
@@ -161,17 +219,19 @@ export default function InvestmentsClient() {
       setEditingAsset(asset);
       setFormData({
         assetType: asset.assetType ?? "FUND",
+        stockMarket: asset.stockMarket ?? "",
         symbol: asset.symbol,
         quantity: asset.quantity.toString(),
-        avgCostTry: asset.avgCostTry.toString(),
+        avgCost: (asset.avgCostOriginal ?? asset.avgCostTry).toString(),
       });
     } else {
       setEditingAsset(null);
       setFormData({
         assetType: "FUND",
+        stockMarket: "",
         symbol: "",
         quantity: "",
-        avgCostTry: "",
+        avgCost: "",
       });
     }
     setIsFormOpen(true);
@@ -182,9 +242,10 @@ export default function InvestmentsClient() {
     setEditingAsset(null);
     setFormData({
       assetType: "FUND",
+      stockMarket: "",
       symbol: "",
       quantity: "",
-      avgCostTry: "",
+      avgCost: "",
     });
   };
 
@@ -192,7 +253,9 @@ export default function InvestmentsClient() {
     e.preventDefault();
 
     const quantity = Number.parseFloat(formData.quantity);
-    const avgCost = Number.parseFloat(formData.avgCostTry);
+    const avgCost = Number.parseFloat(formData.avgCost);
+    const roundedQuantity = Number(quantity.toFixed(6));
+    const roundedAvgCost = Number(avgCost.toFixed(6));
 
     if (
       !formData.symbol.trim() ||
@@ -205,18 +268,34 @@ export default function InvestmentsClient() {
       return;
     }
 
+    if (!isEditing && requiresMarket && !formData.stockMarket) {
+      openModal("error", "Please select a market.");
+      return;
+    }
+
     if (editingAsset) {
       if (!editingAsset.id) {
         openModal("error", "Unable to update asset without an id.");
         return;
       }
 
+      const purchaseCurrency = editingAsset.originalCurrency ?? "TRY";
+      const fxRate =
+        purchaseCurrency === "TRY" || !editingAsset.avgCostOriginal
+          ? 1
+          : editingAsset.avgCostTry / editingAsset.avgCostOriginal;
+      const totalCostTry = Number(
+        (roundedAvgCost * roundedQuantity * fxRate).toFixed(6),
+      );
+
       try {
         const response = await authFetch(`/api/v1/investments/${editingAsset.id}`, {
           method: "PATCH",
           body: JSON.stringify({
-            quantity,
-            avgCostTry: avgCost,
+            quantity: roundedQuantity,
+            totalCostTry,
+            avgCostOriginal: roundedAvgCost,
+            purchaseCurrency,
           }),
         });
 
@@ -242,9 +321,10 @@ export default function InvestmentsClient() {
         method: "POST",
         body: JSON.stringify({
           symbol: formData.symbol.trim(),
-          quantity,
-          avgCostTry: avgCost,
+          quantity: roundedQuantity,
+          avgCost: roundedAvgCost,
           assetType: formData.assetType,
+          stockMarket: requiresMarket ? formData.stockMarket : undefined,
         }),
       });
 
@@ -526,7 +606,10 @@ export default function InvestmentsClient() {
                           <div>
                             <p className="text-sm font-semibold">{asset.symbol}</p>
                             <p className="text-xs text-muted-foreground">
-                              {asset.name}
+                              {formatAssetName(asset.name)}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
                             </p>
                           </div>
                           <div
@@ -538,7 +621,7 @@ export default function InvestmentsClient() {
                             )}
                           >
                             {asset.changePercent >= 0 ? "+" : ""}
-                            {asset.changePercent}%
+                            {asset.changePercent.toFixed(2)}%
                           </div>
                         </div>
 
@@ -551,15 +634,47 @@ export default function InvestmentsClient() {
                           </div>
                           <div>
                             <p className="text-muted-foreground">Avg Cost</p>
-                            <p className="mt-1 font-semibold text-foreground">
-                              {formatCurrency(asset.avgCostTry)}
-                            </p>
+                            <div className="mt-1 space-y-1 text-foreground">
+                              <p className="flex items-center gap-1 text-sm font-semibold">
+                                <TurkishLira className="h-3.5 w-3.5" />
+                                {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+                              </p>
+                              {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  {(() => {
+                                    const Icon = getCurrencyIcon(asset.originalCurrency);
+                                    return <Icon className="h-3 w-3" />;
+                                  })()}
+                                  {formatCurrencyTrimZeros(
+                                    asset.avgCostOriginal ?? asset.avgCostTry,
+                                    asset.originalCurrency,
+                                    6,
+                                  )}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Current Price</p>
-                            <p className="mt-1 font-semibold text-foreground">
-                              {formatCurrency(asset.currentPriceTry)}
-                            </p>
+                            <div className="mt-1 space-y-1 text-foreground">
+                              <p className="flex items-center gap-1 text-sm font-semibold">
+                                <TurkishLira className="h-3.5 w-3.5" />
+                                {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
+                              </p>
+                              {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  {(() => {
+                                    const Icon = getCurrencyIcon(asset.originalCurrency);
+                                    return <Icon className="h-3 w-3" />;
+                                  })()}
+                                  {formatCurrencyTrimZeros(
+                                    asset.currentPriceOriginal ?? asset.currentPriceTry,
+                                    asset.originalCurrency,
+                                    6,
+                                  )}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <div>
                             <p className="text-muted-foreground">P/L</p>
@@ -635,6 +750,7 @@ export default function InvestmentsClient() {
                         ...prev,
                         assetType: e.target.value,
                         symbol: "",
+                        stockMarket: "",
                       }))
                     }
                     disabled={isEditing}
@@ -649,6 +765,39 @@ export default function InvestmentsClient() {
                     <option value="CURRENCY">Currency</option>
                   </select>
                 </div>
+
+                {!isEditing && requiresMarket && (
+                  <div>
+                    <label
+                      htmlFor="stockMarket"
+                      className="mb-2 block text-xs text-muted-foreground"
+                    >
+                      Stock Market
+                    </label>
+                    <select
+                      id="stockMarket"
+                      value={formData.stockMarket}
+                      onChange={(e) =>
+                        setFormData({ ...formData, stockMarket: e.target.value })
+                      }
+                      disabled={availableMarkets.length === 0}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      required
+                    >
+                      {availableMarkets.length === 0 && (
+                        <option value="">No markets available</option>
+                      )}
+                      {availableMarkets.length > 0 && (
+                        <option value="">Select market</option>
+                      )}
+                      {availableMarkets.map((market) => (
+                        <option key={market.id} value={market.id}>
+                          {market.label} · {market.suffix}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label
@@ -709,7 +858,7 @@ export default function InvestmentsClient() {
                   <input
                     id="quantity"
                     type="number"
-                    step="0.01"
+                    step="0.000001"
                     min="0"
                     value={formData.quantity}
                     onChange={(e) =>
@@ -726,16 +875,21 @@ export default function InvestmentsClient() {
                     htmlFor="avgCost"
                     className="mb-2 block text-xs text-muted-foreground"
                   >
-                    Average Cost (TRY)
+                    Average Cost{(() => {
+                      const currency = isEditing
+                        ? editingAsset?.originalCurrency
+                        : selectedMarket?.currency;
+                      return currency ? ` (${currency})` : "";
+                    })()}
                   </label>
                   <input
                     id="avgCost"
                     type="number"
-                    step="0.01"
+                    step="0.000001"
                     min="0"
-                    value={formData.avgCostTry}
+                    value={formData.avgCost}
                     onChange={(e) =>
-                      setFormData({ ...formData, avgCostTry: e.target.value })
+                      setFormData({ ...formData, avgCost: e.target.value })
                     }
                     placeholder="0.00"
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"

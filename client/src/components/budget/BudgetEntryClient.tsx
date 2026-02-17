@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   CreditCard,
@@ -16,6 +16,7 @@ import {
 
 import {
   formatCurrency,
+  type CategoryMeta,
   type PaymentMethod,
   type Transaction,
   type TransactionType,
@@ -24,20 +25,6 @@ import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/auth";
 import { parseApiResponse } from "@/lib/api";
 import FeedbackModal from "@/components/ui/FeedbackModal";
-
-const CATEGORIES = [
-  "Housing",
-  "Food",
-  "Transport",
-  "Utilities",
-  "Lifestyle",
-  "Debt",
-  "Installment",
-  "Healthcare",
-  "Education",
-  "Entertainment",
-  "Other",
-];
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "card", label: "Credit Card" },
@@ -48,11 +35,14 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 export default function BudgetEntryClient() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedMonth, setSelectedMonth] = useState("2026-02");
+  const [selectedLimit, setSelectedLimit] = useState("15");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryMeta[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [modal, setModal] = useState<
     | {
         type: "success" | "error";
@@ -67,12 +57,24 @@ export default function BudgetEntryClient() {
     title: "",
     amountTry: "",
     date: new Date().toISOString().split("T")[0],
-    category: "Food",
+    category: "",
     type: "expense" as TransactionType,
     paymentMethod: "card" as PaymentMethod,
     isInstallment: false,
     installmentMonths: "2",
   });
+
+  const categoryMap = useMemo(() => {
+    return new Map(categories.map((category) => [category.id, category.label]));
+  }, [categories]);
+
+  const getCategoryLabel = (categoryId: string) => {
+    return categoryMap.get(categoryId) ?? categoryId;
+  };
+
+  const getDefaultCategoryId = () => {
+    return categories[0]?.id ?? "OTHER";
+  };
 
   const openModal = (type: "success" | "error", message: string, title?: string) => {
     setModal({
@@ -100,15 +102,20 @@ export default function BudgetEntryClient() {
     { value: "2026-06", label: "Jun 2026" },
   ];
 
-  const loadTransactions = async (monthKey: string) => {
+  const loadTransactions = async (monthKey: string, limit: string) => {
     const [year, month] = monthKey.split("-");
     const query = new URLSearchParams({
       month: String(Number(month)),
       year,
       page: "0",
-      size: "15",
       expanded: "true",
     });
+
+    if (limit === "all") {
+      query.set("size", "1000");
+    } else {
+      query.set("size", limit);
+    }
 
     setIsLoading(true);
     setLoadError(null);
@@ -131,8 +138,54 @@ export default function BudgetEntryClient() {
   };
 
   useEffect(() => {
-    loadTransactions(selectedMonth);
-  }, [selectedMonth]);
+    loadTransactions(selectedMonth, selectedLimit);
+  }, [selectedMonth, selectedLimit]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const response = await authFetch("/api/v1/metadata/categories");
+        const payload = await parseApiResponse<CategoryMeta[]>(response);
+        if (!isActive) {
+          return;
+        }
+        setCategories(payload ?? []);
+      } catch {
+        if (isActive) {
+          setCategories([]);
+        }
+      } finally {
+        if (isActive) {
+          setCategoriesLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (formData.type !== "expense") {
+      return;
+    }
+
+    if (formData.category && categories.some((category) => category.id === formData.category)) {
+      return;
+    }
+
+    if (categories.length) {
+      setFormData((prev) => ({
+        ...prev,
+        category: categories[0].id,
+      }));
+    }
+  }, [categories, formData.category, formData.type]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,11 +204,16 @@ export default function BudgetEntryClient() {
       return;
     }
 
+    if (isExpense && !formData.category) {
+      openModal("error", "Please select a category.");
+      return;
+    }
+
     const payload = {
       title: formData.title.trim() || "Untitled Transaction",
       amountTry: amount,
       date: formData.date,
-      category: isExpense ? formData.category : "Other",
+      category: isExpense ? formData.category : "OTHER",
       type: formData.type,
       paymentMethod: isExpense ? formData.paymentMethod : "transfer",
       isInstallment: isExpense ? formData.isInstallment : false,
@@ -196,14 +254,14 @@ export default function BudgetEntryClient() {
         title: "",
         amountTry: "",
         date: new Date().toISOString().split("T")[0],
-        category: "Food",
+        category: getDefaultCategoryId(),
         type: "expense",
         paymentMethod: "card",
         isInstallment: false,
         installmentMonths: "2",
       });
       setIsFormOpen(false);
-      loadTransactions(selectedMonth);
+      loadTransactions(selectedMonth, selectedLimit);
       openModal("success", `${newTransaction.title} added.`);
     } catch (err) {
       const message =
@@ -263,6 +321,20 @@ export default function BudgetEntryClient() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">Show</p>
+              <select
+                value={selectedLimit}
+                onChange={(e) => setSelectedLimit(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="15">Last 15</option>
+                <option value="30">Last 30</option>
+                <option value="50">Last 50</option>
+                <option value="all">All</option>
+              </select>
             </div>
 
             <button
@@ -414,13 +486,21 @@ export default function BudgetEntryClient() {
                       onChange={(e) =>
                         setFormData({ ...formData, category: e.target.value })
                       }
+                      disabled={categoriesLoading || categories.length === 0}
                       className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
+                      {categoriesLoading && (
+                        <option value="">Loading categories...</option>
+                      )}
+                      {!categoriesLoading && categories.length === 0 && (
+                        <option value="">No categories available</option>
+                      )}
+                      {!categoriesLoading &&
+                        categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 )}
@@ -436,6 +516,7 @@ export default function BudgetEntryClient() {
                         setFormData((prev) => ({
                           ...prev,
                           type: "expense",
+                          category: prev.category || getDefaultCategoryId(),
                         }))
                       }
                       className={cn(
@@ -453,7 +534,7 @@ export default function BudgetEntryClient() {
                         setFormData((prev) => ({
                           ...prev,
                           type: "income",
-                          category: "Other",
+                          category: "OTHER",
                           paymentMethod: "transfer",
                           isInstallment: false,
                           installmentMonths: "2",
@@ -633,7 +714,7 @@ export default function BudgetEntryClient() {
                       <p className="font-semibold">{transaction.title}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span className="rounded bg-muted/60 px-2 py-0.5">
-                          {transaction.category}
+                          {getCategoryLabel(transaction.category)}
                         </span>
                         <span>{transaction.date}</span>
                         {transaction.paymentMethod && (
