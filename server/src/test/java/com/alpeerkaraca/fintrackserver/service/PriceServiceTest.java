@@ -3,6 +3,7 @@ package com.alpeerkaraca.fintrackserver.service;
 import com.alpeerkaraca.fintrackserver.dto.InvestmentExternalDto;
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.model.MarketAssetType;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import com.alpeerkaraca.fintrackserver.strategy.investments.PriceStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,43 +47,43 @@ class PriceServiceTest {
     @Test
     void shouldGetStockInfo() {
         when(stockStrategy.supports(AssetType.STOCK)).thenReturn(true);
-        when(stockStrategy.fetchInfo("AAPL"))
+        when(stockStrategy.fetchInfo("AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "AAPL");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ);
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo("Apple Inc.");
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(2000));
-        verify(stockStrategy).fetchInfo("AAPL");
+        verify(stockStrategy).fetchInfo("AAPL", StockMarket.NASDAQ);
     }
 
     @Test
     void shouldGetFundInfo() {
         when(fundStrategy.supports(AssetType.FUND)).thenReturn(true);
-        when(fundStrategy.fetchInfo("TRF"))
+        when(fundStrategy.fetchInfo("TRF", StockMarket.TEFAS))
                 .thenReturn(new InvestmentExternalDto("Turkey Fund", BigDecimal.valueOf(10.5)));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.FUND, "TRF");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.FUND, "TRF", StockMarket.TEFAS);
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo("Turkey Fund");
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(10.5));
-        verify(fundStrategy).fetchInfo("TRF");
+        verify(fundStrategy).fetchInfo("TRF", StockMarket.TEFAS);
     }
 
     @Test
     void shouldGetMetalInfo() {
         when(metalStrategy.supports(AssetType.GOLD_SILVER)).thenReturn(true);
-        when(metalStrategy.fetchInfo("altin/gram-altin"))
+        when(metalStrategy.fetchInfo("altin/gram-altin", null))
                 .thenReturn(new InvestmentExternalDto("Altın", BigDecimal.valueOf(3500)));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.GOLD_SILVER, "altin/gram-altin");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.GOLD_SILVER, "altin/gram-altin", null);
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo("Altın");
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(3500));
-        verify(metalStrategy).fetchInfo("altin/gram-altin");
+        verify(metalStrategy).fetchInfo("altin/gram-altin", null);
     }
 
     @Test
@@ -91,7 +92,7 @@ class PriceServiceTest {
         when(fundStrategy.supports(any())).thenReturn(false);
         when(metalStrategy.supports(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> priceService.getInfo(AssetType.STOCK, "UNKNOWN"))
+        assertThatThrownBy(() -> priceService.getInfo(AssetType.STOCK, "UNKNOWN", StockMarket.NASDAQ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported asset type");
     }
@@ -99,32 +100,32 @@ class PriceServiceTest {
     @Test
     void shouldUseFirstMatchingStrategy() {
         when(stockStrategy.supports(AssetType.STOCK)).thenReturn(true);
-        when(stockStrategy.fetchInfo("AAPL"))
+        when(stockStrategy.fetchInfo("AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple", BigDecimal.valueOf(2000)));
 
-        priceService.getInfo(AssetType.STOCK, "AAPL");
+        priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ);
 
-        verify(stockStrategy).fetchInfo("AAPL");
-        verify(fundStrategy, never()).fetchInfo(anyString());
+        verify(stockStrategy).fetchInfo("AAPL", StockMarket.NASDAQ);
+        verify(fundStrategy, never()).fetchInfo(anyString(), any());
     }
 
     @Test
     void shouldHandleDifferentSymbols() {
         when(stockStrategy.supports(AssetType.STOCK)).thenReturn(true);
-        when(stockStrategy.fetchInfo("GOOGL"))
+        when(stockStrategy.fetchInfo("GOOGL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Alphabet Inc.", BigDecimal.valueOf(3000)));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "GOOGL");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "GOOGL", StockMarket.NASDAQ);
 
         assertThat(result.name()).isEqualTo("Alphabet Inc.");
-        verify(stockStrategy).fetchInfo("GOOGL");
+        verify(stockStrategy).fetchInfo("GOOGL", StockMarket.NASDAQ);
     }
 
     @Test
     void shouldHandleEmptyStrategyList() {
         PriceService emptyService = new PriceService(Collections.emptyList());
 
-        assertThatThrownBy(() -> emptyService.getInfo(AssetType.STOCK, "AAPL"))
+        assertThatThrownBy(() -> emptyService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported asset type");
     }
@@ -132,22 +133,22 @@ class PriceServiceTest {
     @Test
     void shouldPassCorrectParametersToStrategy() {
         when(fundStrategy.supports(AssetType.FUND)).thenReturn(true);
-        when(fundStrategy.fetchInfo("ABC123"))
+        when(fundStrategy.fetchInfo("ABC123", StockMarket.TEFAS))
                 .thenReturn(new InvestmentExternalDto("Fund ABC", BigDecimal.TEN));
 
-        priceService.getInfo(AssetType.FUND, "ABC123");
+        priceService.getInfo(AssetType.FUND, "ABC123", StockMarket.TEFAS);
 
         verify(fundStrategy).supports(AssetType.FUND);
-        verify(fundStrategy).fetchInfo("ABC123");
+        verify(fundStrategy).fetchInfo("ABC123", StockMarket.TEFAS);
     }
 
     @Test
     void shouldHandleZeroPrice() {
         when(metalStrategy.supports(AssetType.GOLD_SILVER)).thenReturn(true);
-        when(metalStrategy.fetchInfo("emtia/gram-gumus"))
+        when(metalStrategy.fetchInfo("emtia/gram-gumus", null))
                 .thenReturn(new InvestmentExternalDto("Silver", BigDecimal.ZERO));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.GOLD_SILVER, "emtia/gram-gumus");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.GOLD_SILVER, "emtia/gram-gumus", null);
 
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.ZERO);
     }
@@ -155,10 +156,10 @@ class PriceServiceTest {
     @Test
     void shouldHandleLargePrice() {
         when(stockStrategy.supports(AssetType.STOCK)).thenReturn(true);
-        when(stockStrategy.fetchInfo("BRK.A"))
+        when(stockStrategy.fetchInfo("BRK.A", StockMarket.NYSE))
                 .thenReturn(new InvestmentExternalDto("Berkshire Hathaway", new BigDecimal("500000")));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "BRK.A");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.STOCK, "BRK.A", StockMarket.NYSE);
 
         assertThat(result.price()).isEqualByComparingTo(new BigDecimal("500000"));
     }
@@ -166,10 +167,10 @@ class PriceServiceTest {
     @Test
     void shouldHandlePreciseDecimalPrice() {
         when(fundStrategy.supports(AssetType.FUND)).thenReturn(true);
-        when(fundStrategy.fetchInfo("XYZ"))
+        when(fundStrategy.fetchInfo("XYZ", StockMarket.TEFAS))
                 .thenReturn(new InvestmentExternalDto("XYZ Fund", new BigDecimal("12.3456789")));
 
-        InvestmentExternalDto result = priceService.getInfo(AssetType.FUND, "XYZ");
+        InvestmentExternalDto result = priceService.getInfo(AssetType.FUND, "XYZ", StockMarket.TEFAS);
 
         assertThat(result.price()).isEqualByComparingTo(new BigDecimal("12.3456789"));
     }
@@ -179,27 +180,27 @@ class PriceServiceTest {
         when(stockStrategy.supports(AssetType.GOLD_SILVER)).thenReturn(false);
         when(fundStrategy.supports(AssetType.GOLD_SILVER)).thenReturn(false);
         when(metalStrategy.supports(AssetType.GOLD_SILVER)).thenReturn(true);
-        when(metalStrategy.fetchInfo(MarketAssetType.GRAM_ALTIN.getSlug()))
+        when(metalStrategy.fetchInfo(MarketAssetType.GRAM_ALTIN.getSlug(), null))
                 .thenReturn(new InvestmentExternalDto("Gold", BigDecimal.valueOf(3500)));
 
-        priceService.getInfo(AssetType.GOLD_SILVER, MarketAssetType.GRAM_ALTIN.getSlug());
+        priceService.getInfo(AssetType.GOLD_SILVER, MarketAssetType.GRAM_ALTIN.getSlug(), null);
 
         verify(stockStrategy).supports(AssetType.GOLD_SILVER);
         verify(fundStrategy).supports(AssetType.GOLD_SILVER);
         verify(metalStrategy).supports(AssetType.GOLD_SILVER);
-        verify(metalStrategy).fetchInfo(MarketAssetType.GRAM_ALTIN.getSlug());
+        verify(metalStrategy).fetchInfo(MarketAssetType.GRAM_ALTIN.getSlug(), null);
 
     }
 
     @Test
     void shouldNotCallFetchOnNonMatchingStrategies() {
         when(fundStrategy.supports(AssetType.FUND)).thenReturn(true);
-        when(fundStrategy.fetchInfo(anyString()))
+        when(fundStrategy.fetchInfo(anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("Fund", BigDecimal.TEN));
 
-        priceService.getInfo(AssetType.FUND, "TEST");
+        priceService.getInfo(AssetType.FUND, "TEST", StockMarket.TEFAS);
 
-        verify(stockStrategy, never()).fetchInfo(anyString());
-        verify(fundStrategy).fetchInfo("TEST");
+        verify(stockStrategy, never()).fetchInfo(anyString(), any());
+        verify(fundStrategy).fetchInfo("TEST", StockMarket.TEFAS);
     }
 }
