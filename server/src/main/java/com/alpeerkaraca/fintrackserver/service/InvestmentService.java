@@ -186,7 +186,7 @@ public class InvestmentService {
             return price;
         } catch (Exception e) {
             log.warn("Failed to fetch current price for asset {}: {}", asset.getSymbol(), e.getMessage());
-            if (asset.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+            if (asset.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
                 return BigDecimal.ZERO;
             }
             return asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP);
