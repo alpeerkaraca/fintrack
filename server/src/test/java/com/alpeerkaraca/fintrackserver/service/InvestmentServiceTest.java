@@ -138,6 +138,7 @@ class InvestmentServiceTest {
 
     @Test
     void shouldThrowExceptionWhenAssetAlreadyExists() {
+        when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(true);
 
         assertThatThrownBy(() -> investmentService.addInvestment(testUserId, createRequest))
@@ -145,12 +146,10 @@ class InvestmentServiceTest {
                 .hasMessageContaining("already exists");
 
         verify(assetRepository, never()).save(any());
-        verify(userProfileRepository, never()).findById(any());
     }
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
-        when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> investmentService.addInvestment(testUserId, createRequest))
@@ -314,7 +313,7 @@ class InvestmentServiceTest {
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, emptyUpdate, testAssetId);
 
         assertThat(result.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(10));
-        // avgCostTry = totalCostTry / quantity = 45000 / 10 = 4500
-        assertThat(result.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(4500));
+        // avgCostTry = totalCostTry / quantity = (10 * 1500 * 30) / 10 = 45000
+        assertThat(result.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(45000));
     }
 }
