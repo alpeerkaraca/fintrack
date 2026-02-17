@@ -2,10 +2,7 @@ package com.alpeerkaraca.fintrackserver.service;
 
 import com.alpeerkaraca.fintrackserver.dto.TransactionDto;
 import com.alpeerkaraca.fintrackserver.dto.TransactionFilter;
-import com.alpeerkaraca.fintrackserver.model.PaymentMethod;
-import com.alpeerkaraca.fintrackserver.model.Transaction;
-import com.alpeerkaraca.fintrackserver.model.TransactionType;
-import com.alpeerkaraca.fintrackserver.model.UserProfile;
+import com.alpeerkaraca.fintrackserver.model.*;
 import com.alpeerkaraca.fintrackserver.repository.TransactionRepository;
 import com.alpeerkaraca.fintrackserver.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +58,7 @@ class TransactionServiceTest {
                 .title("Test Transaction")
                 .amountTry(BigDecimal.valueOf(100))
                 .date(LocalDate.now())
-                .category("Food")
+                .category(Category.FOOD)
                 .transactionType(TransactionType.EXPENSE)
                 .paymentMethod(PaymentMethod.CASH)
                 .build();

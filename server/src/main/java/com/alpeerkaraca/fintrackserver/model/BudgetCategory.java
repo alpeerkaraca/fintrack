@@ -32,8 +32,9 @@ public class BudgetCategory {
     @JoinColumn(name = "budget_month_id", nullable = false)
     private BudgetMonth budgetMonth;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String category;
+    private Category category;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal limitTry;

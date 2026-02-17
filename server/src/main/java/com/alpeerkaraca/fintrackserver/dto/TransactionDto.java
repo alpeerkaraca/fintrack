@@ -1,5 +1,6 @@
 package com.alpeerkaraca.fintrackserver.dto;
 
+import com.alpeerkaraca.fintrackserver.model.Category;
 import com.alpeerkaraca.fintrackserver.model.InstallmentMeta;
 import com.alpeerkaraca.fintrackserver.model.PaymentMethod;
 import com.alpeerkaraca.fintrackserver.model.TransactionType;
@@ -32,9 +33,8 @@ public class TransactionDto {
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "date must be in yyyy-MM-dd format")
     private String date;
 
-    @NotBlank
-    @Size(max = 255)
-    private String category;
+    @NotNull
+    private Category category;
 
     @NotNull
     private TransactionType type;
