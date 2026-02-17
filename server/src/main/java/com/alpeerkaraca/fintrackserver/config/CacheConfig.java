@@ -56,6 +56,7 @@ public class CacheConfig {
 
         RedisCacheConfiguration exchangeCfg = defaults.entryTtl(Duration.ofDays(1));
         RedisCacheConfiguration fundCfg = defaults.entryTtl(Duration.ofDays(1));
+        RedisCacheConfiguration stockCfg = defaults.entryTtl(Duration.ofMinutes(5));
         RedisCacheConfiguration metalCfg = defaults.entryTtl(Duration.ofMinutes(5));
         RedisCacheConfiguration overviewCfg = defaults.entryTtl(Duration.ofMinutes(2));
 
@@ -64,6 +65,7 @@ public class CacheConfig {
                 .withCacheConfiguration("exchangeRates", exchangeCfg)
                 .withCacheConfiguration("fundPrices", fundCfg)
                 .withCacheConfiguration("metalPrices", metalCfg)
+                .withCacheConfiguration("stockPrices", stockCfg)
                 .withCacheConfiguration("overviews", overviewCfg)
                 .build();
     }
