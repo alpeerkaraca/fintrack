@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -9,194 +9,241 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowDownRight, ArrowUpRight, CreditCard, Wallet } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Coins,
+  CreditCard,
+  DollarSign,
+  TurkishLira,
+  Wallet,
+} from "lucide-react";
 
-import { formatCurrency, formatNumber, type InvestmentAsset } from "@/lib/fintrack";
-import { authFetch, getCurrentUser } from "@/lib/auth";
-import { parseApiResponse } from "@/lib/api";
+import {
+  formatCurrency,
+  formatCurrencyTrimZeros,
+  formatNumber,
+  type CategoryMeta,
+  type InvestmentAsset,
+  type Transaction,
+} from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
+import { authFetch } from "@/lib/auth";
+import { parseApiResponse } from "@/lib/api";
 
-type ForecastItem = {
+type DashboardSummary = {
+  income: number;
+  expense: number;
+  savings: number;
+  creditCardLimit: number;
+  usdRate: number;
+};
+
+type DashboardForecastItem = {
   month: string;
   label: string;
   savings: number;
 };
 
-type CategoryWatchItem = {
+type CategoryWatchlistItem = {
   category: string;
   limitTry: number;
   spentTry: number;
-  alertLevel: "normal" | "warning" | "critical";
+  alertLevel?: "normal" | "warning" | "danger";
 };
 
-type RecentTransaction = {
-  id: string;
-  title: string;
-  amountTry: number;
-  date: string;
-  category: string;
-  type: "income" | "expense";
-  paymentMethod: "card" | "cash" | "transfer" | null;
-  isInstallment: boolean;
-  installmentMeta: {
-    totalTry: number;
-    months: number;
-    startMonth: string;
-  } | null;
+type TransactionPage = {
+  content?: Transaction[];
+  pageNumber?: number;
+  pageSize?: number;
+  totalElements?: number;
+  totalPages?: number;
+  first?: boolean;
+  last?: boolean;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 };
 
-type DashboardOverviewData = {
-  summary: {
-    income: number;
-    expense: number;
-    savings: number;
-    creditCardLimit: number;
-    usdRate: number;
-  };
-  forecast: ForecastItem[];
-  categoryWatchlist: CategoryWatchItem[];
+type DashboardOverview = {
+  summary: DashboardSummary;
+  forecast: DashboardForecastItem[];
+  categoryWatchlist: CategoryWatchlistItem[];
   investments: InvestmentAsset[];
-  currentUsdTryRate: number;
-  recentTransactions: {
-    content: RecentTransaction[];
-    pageNumber: number;
-    pageSize: number;
-    totalElements: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  };
+  currentUsdTryRate?: number;
+  recentTransactions?: TransactionPage;
 };
 
-const toMonthYear = (yearMonth: string) => {
-  const [year, month] = yearMonth.split("-");
-  return {
-    year,
-    month: month?.padStart(2, "0"),
-  };
-};
-
-const getCurrentYearMonth = () => {
+const getCurrentMonthKey = () => {
   const now = new Date();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
   return `${now.getFullYear()}-${month}`;
 };
 
-const getAlertColorClass = (alertLevel: CategoryWatchItem["alertLevel"]) => {
-  if (alertLevel === "critical") {
-    return "bg-rose-500";
+const parseMonthKey = (value: string) => {
+  const [year, month] = value.split("-");
+  return { year: Number(year), month: Number(month) };
+};
+
+const getLimitState = (category: CategoryWatchlistItem) => {
+  if (category.alertLevel) {
+    return category.alertLevel;
   }
-  if (alertLevel === "warning") {
-    return "bg-amber-400";
+
+  if (category.limitTry <= 0) {
+    return "normal";
   }
-  return "bg-emerald-500";
+
+  const ratio = category.spentTry / category.limitTry;
+  if (ratio >= 1) {
+    return "danger";
+  }
+  if (ratio >= 0.85) {
+    return "warning";
+  }
+  return "normal";
+};
+
+const formatAssetName = (name: string) =>
+  name.length > 30 ? `${name.slice(0, 30).trim()}...` : name;
+const getCurrencyIcon = (currency?: string) => {
+  if (currency === "USD") {
+    return DollarSign;
+  }
+  if (currency === "TRY") {
+    return TurkishLira;
+  }
+  return Coins;
 };
 
 export default function DashboardClient() {
-  const [username, setUsername] = useState("User");
-  const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
-  const [overview, setOverview] = useState<DashboardOverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
-  const hasLoadedOnceRef = useRef(false);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
+  const [dashboard, setDashboard] = useState<DashboardOverview | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryMeta[]>([]);
+
+  const categoryMap = useMemo(() => {
+    return new Map(categories.map((category) => [category.id, category.label]));
+  }, [categories]);
+
+  const getCategoryLabel = (categoryId: string) => {
+    return categoryMap.get(categoryId) ?? categoryId;
+  };
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setUsername(user.username);
+    let isActive = true;
+    const { month, year } = parseMonthKey(selectedMonth);
+
+    if (Number.isNaN(month) || Number.isNaN(year)) {
+      setError("Invalid month selection.");
+      setIsLoading(false);
+      return undefined;
     }
-  }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchOverview = async () => {
-      setError("");
-      if (hasLoadedOnceRef.current) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      setError(null);
 
       try {
-        const { month, year } = toMonthYear(selectedMonth);
-        const response = await authFetch(
-          `/api/v1/dashboard/overview?month=${month}&year=${year}&page=0&size=20`,
-        );
-        const payload = await parseApiResponse<DashboardOverviewData>(response);
+        const query = new URLSearchParams({
+          month: String(month),
+          year: String(year),
+          page: "0",
+          size: "15",
+        });
 
-        if (!cancelled) {
-          setOverview(payload);
-          hasLoadedOnceRef.current = true;
+        const response = await authFetch(
+          `/api/v1/dashboard/overview?${query.toString()}`,
+        );
+
+        const payload = await parseApiResponse<DashboardOverview>(response);
+        if (!isActive) {
+          return;
         }
-      } catch (requestError) {
-        if (!cancelled) {
-          setError(
-            requestError instanceof Error
-              ? requestError.message
-              : "Dashboard data could not be loaded.",
+
+        setDashboard(payload);
+        if (payload.forecast?.length) {
+          const hasSelected = payload.forecast.some(
+            (item) => item.month === selectedMonth,
           );
+          if (!hasSelected && payload.forecast[0].month !== selectedMonth) {
+            setSelectedMonth(payload.forecast[0].month);
+          }
         }
+      } catch (err) {
+        if (!isActive) {
+          return;
+        }
+        setError(err instanceof Error ? err.message : "Unable to load dashboard.");
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setRefreshing(false);
+        if (isActive) {
+          setIsLoading(false);
         }
       }
     };
 
-    void fetchOverview();
-
+    loadDashboard();
     return () => {
-      cancelled = true;
+      isActive = false;
     };
   }, [selectedMonth]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCategories = async () => {
+      try {
+        const response = await authFetch("/api/v1/metadata/categories");
+        const payload = await parseApiResponse<CategoryMeta[]>(response);
+        if (isActive) {
+          setCategories(payload ?? []);
+        }
+      } catch {
+        if (isActive) {
+          setCategories([]);
+        }
+      }
+    };
+
+    loadCategories();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const forecast = dashboard?.forecast ?? [];
+  const selectedForecast =
+    forecast.find((item) => item.month === selectedMonth) ?? forecast[0];
+  const summary = dashboard?.summary;
+  const currentLabel = selectedForecast?.label ?? selectedMonth;
+  const currentUsdRate =
+    dashboard?.currentUsdTryRate ?? dashboard?.summary.usdRate ?? 0;
+  const recentTransactions = dashboard?.recentTransactions?.content ?? [];
+
+  const latestTransactions = recentTransactions.slice(0, 6);
+  const installmentTransactions = recentTransactions
+    .filter((transaction) => transaction.isInstallment)
+    .slice(0, 5);
+
+  const bossFightTriggered = summary
+    ? summary.expense / summary.income > 0.85
+    : false;
+  const creditCardRemaining = summary?.creditCardLimit ?? 0;
+
   const netSavingsChart = useMemo(
     () =>
-      (overview?.forecast ?? []).map((item) => ({
+      forecast.map((item) => ({
         month: item.label,
         netSavings: Number((item.savings / 1000).toFixed(1)),
       })),
-    [overview],
+    [forecast],
   );
 
-  const installmentTransactions = useMemo(
-    () =>
-      (overview?.recentTransactions.content ?? []).filter(
-        (transaction) => transaction.isInstallment,
-      ),
-    [overview],
-  );
-
-  if (loading && !overview) {
+  if (isLoading && !dashboard) {
     return (
-      <section className="px-6 py-6 lg:px-10">
-        <div className="mb-4 h-7 w-56 animate-pulse rounded bg-muted/50" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-32 animate-pulse rounded-2xl border border-border bg-card/40"
-            />
-          ))}
-        </div>
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="h-72 animate-pulse rounded-2xl border border-border bg-card/40" />
-          <div className="h-72 animate-pulse rounded-2xl border border-border bg-card/40" />
-        </div>
-      </section>
-    );
-  }
-
-  if (!overview) {
-    return (
-      <section className="px-6 py-6 lg:px-10">
-        <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-          {error || "No dashboard data available."}
-        </p>
-      </section>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted/60 border-t-primary" />
+      </div>
     );
   }
 
@@ -205,56 +252,55 @@ export default function DashboardClient() {
       <div className="border-b border-border px-6 py-6 lg:px-10">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Welcome back, {username}</p>
+            <p className="text-sm text-muted-foreground">Welcome back</p>
             <h2 className="text-2xl font-semibold">Dashboard Overview</h2>
           </div>
-          <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-muted-foreground">Month</p>
-              {refreshing ? (
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  Updating
-                </span>
-              ) : null}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">USD/TRY Rate</p>
+              <div className="mt-2 text-sm font-semibold">
+                {formatNumber(currentUsdRate)}
+              </div>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {overview.forecast.map((item) => (
-                <button
-                  key={item.month}
-                  type="button"
-                  onClick={() => setSelectedMonth(item.month)}
-                  className={cn(
-                    "rounded-lg px-3 py-1 text-xs transition",
-                    item.month === selectedMonth
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/70 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
+            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">Month</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {forecast.map((item) => (
+                  <button
+                    key={item.month}
+                    type="button"
+                    onClick={() => setSelectedMonth(item.month)}
+                    className={cn(
+                      "rounded-lg px-3 py-1 text-xs transition",
+                      item.month === selectedMonth
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted/70 text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
+        {error ? (
+          <p className="mt-3 text-xs text-rose-400">{error}</p>
+        ) : isLoading ? (
+          <p className="mt-3 text-xs text-muted-foreground">Loading dashboard...</p>
+        ) : null}
       </div>
 
       <section className="px-6 py-6 lg:px-10">
-        {error ? (
-          <p className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-            {error}
-          </p>
-        ) : null}
-
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card/70 p-5">
             <p className="text-xs text-muted-foreground">Monthly Income</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">
-                  {formatCurrency(overview.summary.income)}
+                  {formatCurrency(summary?.income ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">From selected month</p>
+                <p className="text-xs text-muted-foreground">Selected month total</p>
               </div>
               <div className="rounded-full bg-emerald-500/10 p-3 text-emerald-400">
                 <ArrowUpRight className="h-5 w-5" />
@@ -266,9 +312,9 @@ export default function DashboardClient() {
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">
-                  {formatCurrency(overview.summary.expense)}
+                  {formatCurrency(summary?.expense ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">From selected month</p>
+                <p className="text-xs text-muted-foreground">All categories</p>
               </div>
               <div className="rounded-full bg-rose-500/10 p-3 text-rose-400">
                 <ArrowDownRight className="h-5 w-5" />
@@ -280,7 +326,7 @@ export default function DashboardClient() {
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">
-                  {formatCurrency(overview.summary.savings)}
+                  {formatCurrency(summary?.savings ?? 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">Income - Expenses</p>
               </div>
@@ -294,9 +340,9 @@ export default function DashboardClient() {
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-2xl font-semibold">
-                  {formatCurrency(overview.summary.creditCardLimit)}
+                  {formatCurrency(creditCardRemaining)}
                 </p>
-                <p className="text-xs text-muted-foreground">Available from backend</p>
+                <p className="text-xs text-muted-foreground">Current balance</p>
               </div>
               <div className="rounded-full bg-amber-500/10 p-3 text-amber-400">
                 <CreditCard className="h-5 w-5" />
@@ -310,12 +356,53 @@ export default function DashboardClient() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Boss Fight
+                </p>
+                <h3 className="text-lg font-semibold">{currentLabel} Alert</h3>
+              </div>
+              <span
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs",
+                  bossFightTriggered
+                    ? "bg-rose-500/15 text-rose-300"
+                    : "bg-emerald-500/10 text-emerald-300",
+                )}
+              >
+                {bossFightTriggered ? "Risk Level High" : "Stable"}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {bossFightTriggered
+                ? "Expenses are above 85% of income. Prepare an emergency buffer."
+                : "Spending ratio is under control for this month."}
+            </p>
+            {summary && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-background/60 p-4">
+                  <p className="text-xs text-muted-foreground">Income</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {formatCurrency(summary.income)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-background/60 p-4">
+                  <p className="text-xs text-muted-foreground">Expenses</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {formatCurrency(summary.expense)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="rounded-2xl border border-border bg-card/60 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Forecast
                 </p>
-                <h3 className="text-lg font-semibold">Net Savings Trend</h3>
+                <h3 className="text-lg font-semibold">Savings Forecast</h3>
               </div>
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                USD/TRY {formatNumber(overview.currentUsdTryRate)}
+                Updated from backend
               </span>
             </div>
             <div className="mt-4 h-52">
@@ -356,71 +443,6 @@ export default function DashboardClient() {
               </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Investments
-                </p>
-                <h3 className="text-lg font-semibold">Live Portfolio</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {overview.investments.length} assets
-              </span>
-            </div>
-            <div className="mt-5 space-y-4">
-              {overview.investments.map((asset) => (
-                <div
-                  key={asset.symbol}
-                  className="rounded-xl border border-border bg-background/60 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold">{asset.symbol}</p>
-                      <p className="text-xs text-muted-foreground">{asset.name}</p>
-                    </div>
-                    <div
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs",
-                        asset.changePercent >= 0
-                          ? "bg-emerald-500/10 text-emerald-300"
-                          : "bg-rose-500/10 text-rose-300",
-                      )}
-                    >
-                      {asset.changePercent >= 0 ? "+" : ""}
-                      {asset.changePercent}%
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                    <div>
-                      <p>Quantity</p>
-                      <p className="text-sm font-semibold text-foreground">
-                        {formatNumber(asset.quantity)}
-                      </p>
-                    </div>
-                    <div>
-                      <p>Price</p>
-                      <p className="text-sm font-semibold text-foreground">
-                        {formatCurrency(asset.currentPriceTry)}
-                      </p>
-                    </div>
-                    <div>
-                      <p>P/L</p>
-                      <p
-                        className={cn(
-                          "text-sm font-semibold",
-                          asset.profitLossTry >= 0 ? "text-emerald-400" : "text-rose-400",
-                        )}
-                      >
-                        {formatCurrency(asset.profitLossTry)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
@@ -432,15 +454,19 @@ export default function DashboardClient() {
                 </p>
                 <h3 className="text-lg font-semibold">Category Watchlist</h3>
               </div>
-              <span className="text-xs text-muted-foreground">{selectedMonth}</span>
+              <span className="text-xs text-muted-foreground">{currentLabel}</span>
             </div>
             <div className="mt-5 grid gap-4">
-              {overview.categoryWatchlist.map((category) => {
-                const ratio = Math.min((category.spentTry / category.limitTry) * 100, 100);
+              {(dashboard?.categoryWatchlist ?? []).map((category) => {
+                const state = getLimitState(category);
+                const ratio =
+                  category.limitTry > 0
+                    ? Math.min((category.spentTry / category.limitTry) * 100, 100)
+                    : 0;
                 return (
                   <div key={category.category}>
                     <div className="flex items-center justify-between text-sm">
-                      <span>{category.category}</span>
+                      <span>{getCategoryLabel(category.category)}</span>
                       <span className="text-xs text-muted-foreground">
                         {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
                       </span>
@@ -449,7 +475,11 @@ export default function DashboardClient() {
                       <div
                         className={cn(
                           "h-2 rounded-full",
-                          getAlertColorClass(category.alertLevel),
+                          state === "danger"
+                            ? "bg-rose-500"
+                            : state === "warning"
+                              ? "bg-amber-400"
+                              : "bg-emerald-500",
                         )}
                         style={{ width: `${ratio}%` }}
                       />
@@ -463,16 +493,161 @@ export default function DashboardClient() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Investments
+                </p>
+                <h3 className="text-lg font-semibold">Mutual Funds</h3>
+              </div>
+              <span className="text-xs text-muted-foreground">Latest snapshot</span>
+            </div>
+            <div className="mt-5 space-y-4">
+              {(dashboard?.investments ?? []).map((asset) => (
+                <div
+                  key={asset.symbol}
+                  className="rounded-xl border border-border bg-background/60 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">{asset.symbol}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatAssetName(asset.name)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
+                      </p>
+                    </div>
+                    <div
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs",
+                        asset.changePercent >= 0
+                          ? "bg-emerald-500/10 text-emerald-300"
+                          : "bg-rose-500/10 text-rose-300",
+                      )}
+                    >
+                      {asset.changePercent >= 0 ? "+" : ""}
+                      {asset.changePercent.toFixed(2)}%
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+                    <div>
+                      <p>Quantity</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {asset.quantity}
+                      </p>
+                    </div>
+                    <div>
+                      <p>Avg Cost</p>
+                      <div className="mt-1 space-y-1 text-foreground">
+                        <p className="flex items-center gap-1 text-sm font-semibold">
+                          <TurkishLira className="h-3.5 w-3.5" />
+                          {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+                        </p>
+                        {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {(() => {
+                              const Icon = getCurrencyIcon(asset.originalCurrency);
+                              return <Icon className="h-3 w-3" />;
+                            })()}
+                            {formatCurrencyTrimZeros(
+                              asset.avgCostOriginal ?? asset.avgCostTry,
+                              asset.originalCurrency,
+                              6,
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p>Current Price</p>
+                      <div className="mt-1 space-y-1 text-foreground">
+                        <p className="flex items-center gap-1 text-sm font-semibold">
+                          <TurkishLira className="h-3.5 w-3.5" />
+                          {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
+                        </p>
+                        {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {(() => {
+                              const Icon = getCurrencyIcon(asset.originalCurrency);
+                              return <Icon className="h-3 w-3" />;
+                            })()}
+                            {formatCurrencyTrimZeros(
+                              asset.currentPriceOriginal ?? asset.currentPriceTry,
+                              asset.originalCurrency,
+                              6,
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p>P/L</p>
+                      <p
+                        className={cn(
+                          "text-sm font-semibold",
+                          asset.profitLossTry >= 0
+                            ? "text-emerald-400"
+                            : "text-rose-400",
+                        )}
+                      >
+                        {formatCurrency(asset.profitLossTry)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
+          <div className="rounded-2xl border border-border bg-card/60 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Transactions
+                </p>
+                <h3 className="text-lg font-semibold">Latest Activity</h3>
+              </div>
+              <span className="text-xs text-muted-foreground">{currentLabel}</span>
+            </div>
+            <div className="mt-5 space-y-4">
+              {latestTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{transaction.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getCategoryLabel(transaction.category)} · {transaction.date}
+                    </p>
+                  </div>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      transaction.type === "expense"
+                        ? "text-rose-400"
+                        : "text-emerald-400",
+                    )}
+                  >
+                    {transaction.type === "expense" ? "-" : "+"}
+                    {formatCurrency(transaction.amountTry)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border bg-card/60 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Installments
                 </p>
                 <h3 className="text-lg font-semibold">Smart Schedule</h3>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {installmentTransactions.length} entries
-              </span>
+              <span className="text-xs text-muted-foreground">Auto-distributed</span>
             </div>
             <div className="mt-5 space-y-4">
-              {installmentTransactions.slice(0, 5).map((transaction) => (
+              {installmentTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
                   className="rounded-xl border border-border bg-background/60 px-4 py-3"
@@ -481,15 +656,8 @@ export default function DashboardClient() {
                     <div>
                       <p className="text-sm font-semibold">{transaction.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {transaction.category} · {transaction.date}
+                        {getCategoryLabel(transaction.category)} · {transaction.date}
                       </p>
-                      {transaction.installmentMeta ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {transaction.installmentMeta.months} months · total{" "}
-                          {formatCurrency(transaction.installmentMeta.totalTry)} · starts{" "}
-                          {transaction.installmentMeta.startMonth}
-                        </p>
-                      ) : null}
                     </div>
                     <p className="text-sm font-semibold text-amber-400">
                       {formatCurrency(transaction.amountTry)}
@@ -497,50 +665,10 @@ export default function DashboardClient() {
                   </div>
                 </div>
               ))}
-              {!installmentTransactions.length ? (
-                <p className="text-sm text-muted-foreground">
-                  No installment transactions for this month.
-                </p>
-              ) : null}
             </div>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-border bg-card/60 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Transactions
-              </p>
-              <h3 className="text-lg font-semibold">Latest Activity</h3>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {overview.recentTransactions.totalElements} total
-            </span>
-          </div>
-          <div className="mt-5 space-y-4">
-            {overview.recentTransactions.content.slice(0, 8).map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold">{transaction.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {transaction.category} · {transaction.date}
-                  </p>
-                </div>
-                <p
-                  className={cn(
-                    "text-sm font-semibold",
-                    transaction.type === "expense" ? "text-rose-400" : "text-emerald-400",
-                  )}
-                >
-                  {transaction.type === "expense" ? "-" : "+"}
-                  {formatCurrency(transaction.amountTry)}
-                </p>
-              </div>
-            ))}
+            <p className="mt-4 text-xs text-muted-foreground">
+              Installment costs are automatically distributed across active schedules.
+            </p>
           </div>
         </div>
       </section>

@@ -15,7 +15,6 @@ export async function parseApiResponse<T>(response: unknown): Promise<T> {
         const body = (await response.json()) as ApiResponse<unknown>;
         message = body.error || body.message || message;
       } catch {
-        // Fall back to default message for non-JSON responses.
       }
       throw new Error(message);
     }
