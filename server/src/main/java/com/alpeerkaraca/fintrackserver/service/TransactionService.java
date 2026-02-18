@@ -31,6 +31,7 @@ import java.util.UUID;
 public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final UserProfileRepository userProfileRepository;
+    private final CacheService cacheService;
 
     public Page<Transaction> getTransactionsByUser(UUID userId, Pageable pageable) {
         return transactionRepository.findByUserProfileId(userId, pageable);
@@ -65,7 +66,7 @@ public class TransactionService {
 
         if (Boolean.TRUE.equals(entity.getIsInstallment()) && entity.getInstallmentMeta() != null) {
             YearMonth start = YearMonth.parse(entity.getInstallmentMeta().getStartMonth());
-            YearMonth end = start.plusMonths(entity.getInstallmentMeta().getMonths() - 1);
+            YearMonth end = start.plusMonths(entity.getInstallmentMeta().getMonths() - 1L);
 
             if (filter.getMonth() != null && filter.getYear() != null) {
                 YearMonth target = YearMonth.of(filter.getYear(), filter.getMonth());
@@ -99,6 +100,7 @@ public class TransactionService {
                 .build();
 
     }
+
     @Transactional
     public TransactionDto createTransaction(UUID userId, TransactionDto dto) {
         try {
@@ -119,6 +121,7 @@ public class TransactionService {
                     .transactionType(dto.getType()).build();
 
             Transaction savedTransaction = transactionRepository.save(transaction);
+            cacheService.evictAllUserCaches(userId);
             return convertToDto(savedTransaction);
         } catch (Exception e) {
             log.error("Error creating transaction for user {}: {}", userId, e.getMessage());

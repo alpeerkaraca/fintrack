@@ -38,20 +38,20 @@ public class InvestmentAssetDto {
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = true, message = "avgCostTry must be non-negative")
-    @Digits(integer = 20, fraction = 2)
+    @Digits(integer = 20, fraction = 6)
     private BigDecimal avgCostTry;
 
     @NotNull
     @DecimalMin(value = "0.00", inclusive = true, message = "currentPriceTry must be non-negative")
-    @Digits(integer = 20, fraction = 2)
+    @Digits(integer = 20, fraction = 6)
     private BigDecimal currentPriceTry;
 
     @NotNull
-    @Digits(integer = 6, fraction = 4, message = "changePercent must have up to 4 decimal places")
+    @Digits(integer = 6, fraction = 6, message = "changePercent must have up to 4 decimal places")
     private BigDecimal changePercent;
 
     @NotNull
-    @Digits(integer = 20, fraction = 2)
+    @Digits(integer = 20, fraction = 6)
     private BigDecimal profitLossTry;
 
     @NotNull
