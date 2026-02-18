@@ -48,5 +48,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
             "AND t.paymentMethod = :paymentMethod " +
             "AND t.transactionType = :transactionType ")
     List<Transaction> findByUserProfileIdAndPaymentMethodAndTransactionType(UUID userId, PaymentMethod paymentMethod, TransactionType transactionType);
-
+    List<Transaction> findByUserProfileIdAndDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
 }

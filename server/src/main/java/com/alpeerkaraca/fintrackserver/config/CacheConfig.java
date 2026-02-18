@@ -1,6 +1,7 @@
 package com.alpeerkaraca.fintrackserver.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.springframework.data.redis.core.RedisTemplate;
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import org.springframework.cache.annotation.EnableCaching;
@@ -59,6 +60,7 @@ public class CacheConfig {
         RedisCacheConfiguration stockCfg = defaults.entryTtl(Duration.ofMinutes(5));
         RedisCacheConfiguration metalCfg = defaults.entryTtl(Duration.ofMinutes(5));
         RedisCacheConfiguration overviewCfg = defaults.entryTtl(Duration.ofMinutes(2));
+        RedisCacheConfiguration reportSummaryCfg = defaults.entryTtl(Duration.ofHours(2));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(defaults)
@@ -67,6 +69,14 @@ public class CacheConfig {
                 .withCacheConfiguration("metalPrices", metalCfg)
                 .withCacheConfiguration("stockPrices", stockCfg)
                 .withCacheConfiguration("overviews", overviewCfg)
+                .withCacheConfiguration("reportSummary", reportSummaryCfg)
                 .build();
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        return template;
     }
 }
