@@ -135,7 +135,7 @@ class TransactionsRepositoryTest {
 
         Transaction found = transactionsRepository.findById(testTransaction.getId()).get();
 
-        assertThat(found.getCategory()).isEqualTo("Food");
+        assertThat(found.getCategory()).isEqualTo(Category.FOOD);
     }
 
     @Test
