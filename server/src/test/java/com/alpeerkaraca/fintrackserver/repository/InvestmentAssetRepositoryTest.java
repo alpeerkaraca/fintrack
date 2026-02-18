@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.AssetType;
 import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
+import com.alpeerkaraca.fintrackserver.model.StockMarket;
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,11 @@ class InvestmentAssetRepositoryTest {
                 .symbol("AAPL")
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(100))
+                .avgCostOriginal(BigDecimal.valueOf(150.50))
+                .purchaseCurrency("USD")
+                .totalCostTry(BigDecimal.valueOf(450000))
                 .type(AssetType.STOCK)
+                .stockMarket(StockMarket.NASDAQ)
                 .userProfile(testUser)
                 .build();
     }

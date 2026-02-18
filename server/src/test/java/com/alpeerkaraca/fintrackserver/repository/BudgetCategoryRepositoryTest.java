@@ -67,7 +67,7 @@ class BudgetCategoryRepositoryTest {
         BudgetCategory saved = budgetCategoryRepository.save(testCategory);
 
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getCategory()).isEqualTo("Food");
+        assertThat(saved.getCategory()).isEqualTo(Category.FOOD);
     }
 
     @Test

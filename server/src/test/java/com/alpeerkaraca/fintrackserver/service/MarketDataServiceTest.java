@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 class MarketDataServiceTest {
 
     @Mock
-    private RestTemplate restTemplate;
+    private RestClient restClient;
 
     @InjectMocks
     private MarketDataService marketDataService;
@@ -45,21 +45,34 @@ class MarketDataServiceTest {
                 BigDecimal.valueOf(33.5)
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result = marketDataService.getUsdToTryInfo();
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo("USD");
         assertThat(result.price()).isEqualByComparingTo(BigDecimal.valueOf(33.5));
-        verify(restTemplate).getForObject(anyString(), eq(ExchangeRateResponse.class));
     }
 
     @Test
     void shouldThrowExceptionWhenExchangeRateResponseIsNull() {
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(null);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(null);
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
@@ -75,8 +88,15 @@ class MarketDataServiceTest {
                 null
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
@@ -92,8 +112,15 @@ class MarketDataServiceTest {
                 null
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
@@ -102,8 +129,11 @@ class MarketDataServiceTest {
 
     @Test
     void shouldThrowExceptionWhenRestTemplateThrowsException() {
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenThrow(new RuntimeException("Network error"));
+        // Mock the RestClient chain to throw exception
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenThrow(new RuntimeException("Network error"));
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
@@ -113,8 +143,14 @@ class MarketDataServiceTest {
 
     @Test
     void shouldHandleHttpClientErrorException() {
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenThrow(HttpClientErrorException.class);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenThrow(HttpClientErrorException.class);
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
@@ -130,12 +166,20 @@ class MarketDataServiceTest {
                 BigDecimal.valueOf(33.5)
         );
 
-        when(restTemplate.getForObject(contains(testApiKey), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain - need to use anyString() for flexible matching
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        // Use anyString() to be flexible with the exact URL format
+        when(mockHeadersUri.uri(anyString(), eq(testApiKey))).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         marketDataService.getUsdToTryInfo();
 
-        verify(restTemplate).getForObject(contains(testApiKey), eq(ExchangeRateResponse.class));
+        verify(mockHeadersUri).uri(anyString(), eq(testApiKey));
     }
 
     @Test
@@ -147,8 +191,15 @@ class MarketDataServiceTest {
                 BigDecimal.valueOf(33.5)
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result1 = marketDataService.getUsdToTryInfo();
         InvestmentExternalDto result2 = marketDataService.getUsdToTryInfo();
@@ -166,8 +217,15 @@ class MarketDataServiceTest {
                 BigDecimal.valueOf(40.25)
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result = marketDataService.getUsdToTryInfo();
 
@@ -183,8 +241,15 @@ class MarketDataServiceTest {
                 BigDecimal.ZERO
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result = marketDataService.getUsdToTryInfo();
 
@@ -200,8 +265,15 @@ class MarketDataServiceTest {
                 new BigDecimal("999999.99")
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result = marketDataService.getUsdToTryInfo();
 
@@ -217,8 +289,15 @@ class MarketDataServiceTest {
                 new BigDecimal("33.567891234")
         );
 
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenReturn(response);
+        // Mock the RestClient chain
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec mockResponse = mock(RestClient.ResponseSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.retrieve()).thenReturn(mockResponse);
+        when(mockResponse.onStatus(any(), any())).thenReturn(mockResponse);
+        when(mockResponse.body(ExchangeRateResponse.class)).thenReturn(response);
 
         InvestmentExternalDto result = marketDataService.getUsdToTryInfo();
 
@@ -227,8 +306,11 @@ class MarketDataServiceTest {
 
     @Test
     void shouldRethrowMarketDataFetchException() {
-        when(restTemplate.getForObject(anyString(), eq(ExchangeRateResponse.class)))
-                .thenThrow(new MarketDataFetchException("Original exception"));
+        // Mock the RestClient chain to throw exception
+        RestClient.RequestHeadersUriSpec mockHeadersUri = mock(RestClient.RequestHeadersUriSpec.class);
+        
+        when(restClient.get()).thenReturn(mockHeadersUri);
+        when(mockHeadersUri.uri(anyString(), anyString())).thenThrow(new MarketDataFetchException("Original exception"));
 
         assertThatThrownBy(() -> marketDataService.getUsdToTryInfo())
                 .isInstanceOf(MarketDataFetchException.class)
