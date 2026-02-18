@@ -43,6 +43,9 @@ class InvestmentServiceTest {
     @Mock
     private UserProfileRepository userProfileRepository;
 
+    @Mock
+    private MarketDataService marketDataService;
+
     @InjectMocks
     private InvestmentService investmentService;
 
@@ -71,7 +74,11 @@ class InvestmentServiceTest {
                 .name("Apple Inc.")
                 .quantity(BigDecimal.valueOf(10))
                 .avgCostOriginal(BigDecimal.valueOf(1500))
+                .purchaseCurrency("USD")
+                // totalCostTry = quantity * avgCostOriginal * rate = 10 * 1500 * 33.5 = 502500
+                .totalCostTry(new BigDecimal("502500.00"))
                 .type(AssetType.STOCK)
+                .stockMarket(StockMarket.NASDAQ)
                 .build();
 
         createRequest = new InvestmentCreateRequest();
@@ -79,6 +86,7 @@ class InvestmentServiceTest {
         createRequest.setQuantity(BigDecimal.valueOf(10));
         createRequest.setAvgCost(BigDecimal.valueOf(1500));
         createRequest.setAssetType(AssetType.STOCK);
+        createRequest.setStockMarket(StockMarket.NASDAQ);
 
         updateRequest = new InvestmentUpdateRequest();
         updateRequest.setQuantity(BigDecimal.valueOf(15));
@@ -89,6 +97,8 @@ class InvestmentServiceTest {
     void shouldGetUserPortfolio() {
         List<InvestmentAsset> assets = Arrays.asList(testAsset);
         when(assetRepository.findByUserProfileId(testUserId)).thenReturn(assets);
+        when(marketDataService.getUsdToTryInfo())
+                .thenReturn(new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(priceService.getInfo(any(), anyString(), any())).thenReturn(
                 new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000))
         );
@@ -115,6 +125,8 @@ class InvestmentServiceTest {
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
         InvestmentAssetDto result = investmentService.addInvestment(testUserId, createRequest);
@@ -126,6 +138,7 @@ class InvestmentServiceTest {
 
     @Test
     void shouldThrowExceptionWhenAssetAlreadyExists() {
+        when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(true);
 
         assertThatThrownBy(() -> investmentService.addInvestment(testUserId, createRequest))
@@ -137,7 +150,6 @@ class InvestmentServiceTest {
 
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
-        when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "AAPL")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> investmentService.addInvestment(testUserId, createRequest))
@@ -151,6 +163,8 @@ class InvestmentServiceTest {
     void shouldUpdateInvestment() {
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
@@ -158,7 +172,8 @@ class InvestmentServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(15));
-        assertThat(result.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(1600));
+        // avgCostTry = totalCostTry / quantity = (15 * 1600 * 33.5) / 15 = 1600 * 33.5 = 53600
+        assertThat(result.getAvgCostTry()).isEqualByComparingTo(new BigDecimal("53600.00"));
     }
 
     @Test
@@ -168,13 +183,16 @@ class InvestmentServiceTest {
 
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, partialUpdate, testAssetId);
 
         assertThat(result.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(20));
-        assertThat(result.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(1500));
+        // avgCostTry = totalCostTry / quantity = (20 * 1500 * 33.5) / 20 = 1500 * 33.5 = 50250
+        assertThat(result.getAvgCostTry()).isEqualByComparingTo(new BigDecimal("50250.00"));
     }
 
     @Test
@@ -217,6 +235,8 @@ class InvestmentServiceTest {
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
         InvestmentAssetDto result = investmentService.addInvestment(testUserId, createRequest);
@@ -230,8 +250,11 @@ class InvestmentServiceTest {
         createRequest.setSymbol("aapl");
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "aapl")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
-        when(priceService.getInfo(AssetType.STOCK, "aapl", StockMarket.NASDAQ))
+        // The service will uppercase the symbol when calling priceService.getInfo
+        when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenAnswer(invocation -> {
             InvestmentAsset saved = invocation.getArgument(0);
             assertThat(saved.getSymbol()).isEqualTo("AAPL");
@@ -247,11 +270,14 @@ class InvestmentServiceTest {
     void shouldHandleDifferentAssetTypes() {
         createRequest.setAssetType(AssetType.FUND);
         createRequest.setSymbol("TRF");
+        createRequest.setStockMarket(StockMarket.TEFAS);
         
         when(assetRepository.existsByUserProfileIdAndSymbol(testUserId, "TRF")).thenReturn(false);
         when(userProfileRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getInfo(AssetType.FUND, "TRF", StockMarket.TEFAS))
                 .thenReturn(new InvestmentExternalDto("Turkey Fund", BigDecimal.valueOf(10)));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(assetRepository.save(any(InvestmentAsset.class))).thenReturn(testAsset);
 
         InvestmentAssetDto result = investmentService.addInvestment(testUserId, createRequest);
@@ -263,13 +289,19 @@ class InvestmentServiceTest {
     @Test
     void shouldCalculateProfitCorrectly() {
         when(assetRepository.findByUserProfileId(testUserId)).thenReturn(Arrays.asList(testAsset));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(priceService.getInfo(AssetType.STOCK, "AAPL", StockMarket.NASDAQ))
                 .thenReturn(new InvestmentExternalDto("Apple Inc.", BigDecimal.valueOf(2000)));
+        // Mock the currency rate fetch
+        when(priceService.getInfo(AssetType.CURRENCY, null, null))
+                .thenReturn(new InvestmentExternalDto("USD/TRY", BigDecimal.valueOf(33.5)));
 
         List<InvestmentAssetDto> result = investmentService.getUserPortfolio(testUserId);
 
         assertThat(result.get(0).getProfitLossTry()).isNotNull();
-        assertThat(result.get(0).getCurrentPriceTry()).isEqualByComparingTo(BigDecimal.valueOf(2000));
+        // currentPriceTry = 2000 * 33.5 = 67000
+        assertThat(result.get(0).getCurrentPriceTry()).isEqualByComparingTo(new BigDecimal("67000.00"));
     }
 
     @Test
@@ -278,12 +310,15 @@ class InvestmentServiceTest {
         
         when(assetRepository.findByIdAndUserProfileId(testAssetId, testUserId))
                 .thenReturn(Optional.of(testAsset));
+        when(marketDataService.getUsdToTryInfo()).thenReturn(
+                new InvestmentExternalDto("USD", BigDecimal.valueOf(33.5)));
         when(priceService.getInfo(any(), anyString(), any()))
                 .thenReturn(new InvestmentExternalDto("AAPL", BigDecimal.valueOf(2000)));
 
         InvestmentAssetDto result = investmentService.updateInvestment(testUserId, emptyUpdate, testAssetId);
 
         assertThat(result.getQuantity()).isEqualByComparingTo(BigDecimal.valueOf(10));
-        assertThat(result.getAvgCostTry()).isEqualByComparingTo(BigDecimal.valueOf(1500));
+        // avgCostTry = totalCostTry / quantity = 502500 / 10 = 50250
+        assertThat(result.getAvgCostTry()).isEqualByComparingTo(new BigDecimal("50250.00"));
     }
 }

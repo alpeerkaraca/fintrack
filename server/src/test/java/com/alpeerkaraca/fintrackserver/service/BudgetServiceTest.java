@@ -148,7 +148,7 @@ class BudgetServiceTest {
         List<BudgetCategoryResponse> result = budgetService.getCategoryWatchlist(testUserId, 1, 2024);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getCategory()).isEqualTo("Food");
+        assertThat(result.get(0).getCategory()).isEqualTo(Category.FOOD);
         assertThat(result.get(0).getLimitTry()).isEqualByComparingTo(BigDecimal.valueOf(5000));
         assertThat(result.get(0).getSpentTry()).isEqualByComparingTo(BigDecimal.valueOf(3000));
     }
