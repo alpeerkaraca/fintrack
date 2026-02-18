@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -27,14 +27,12 @@ import {
 } from "recharts";
 
 import {
-  BASE_TRANSACTIONS,
-  buildBudgets,
-  expandInstallments,
   formatCurrency,
   formatNumber,
-  USD_TRY_RATE,
 } from "@/lib/fintrack";
 import { cn } from "@/lib/utils";
+import { authFetch } from "@/lib/auth";
+import { parseApiResponse } from "@/lib/api";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Housing: "#8b5cf6",
@@ -50,71 +48,188 @@ const CATEGORY_COLORS: Record<string, string> = {
   Other: "#64748b",
 };
 
+const CATEGORY_PALETTE = [
+  "#8b5cf6",
+  "#06b6d4",
+  "#10b981",
+  "#f59e0b",
+  "#ec4899",
+  "#ef4444",
+  "#a855f7",
+  "#14b8a6",
+  "#3b82f6",
+  "#f97316",
+  "#64748b",
+  "#0ea5e9",
+];
+
+type ReportSummary = {
+  currency: string;
+  range: {
+    start: string;
+    end: string;
+  };
+  totals: {
+    incomeTry: number;
+    expenseTry: number;
+    netSavingsTry: number;
+    savingsRatePct: number;
+  };
+  averages: {
+    monthlyIncomeTry: number;
+    monthlyExpenseTry: number;
+    monthlySavingsTry: number;
+  };
+  monthlySeries: {
+    month: string;
+    label: string;
+    incomeTry: number;
+    expenseTry: number;
+    netSavingsTry: number;
+  }[];
+  categoryBreakdown: {
+    categoryId: string;
+    categoryLabel: string;
+    totalTry: number;
+  }[];
+  topCategory?: {
+    categoryId: string;
+    categoryLabel: string;
+    totalTry: number;
+  };
+  metadata?: {
+    generatedAt: string;
+    dataPoints?: {
+      categories: number;
+      months: number;
+      transactions: number;
+    };
+  };
+};
+
+const getToday = () => new Date().toISOString().split("T")[0];
+
+const getMonthStart = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+};
+
 export default function ReportsClient() {
-  const [usdSalary] = useState(1190);
   const [selectedView, setSelectedView] = useState<"overview" | "category" | "forecast">(
     "overview",
   );
+  const [startDate, setStartDate] = useState(getMonthStart);
+  const [endDate, setEndDate] = useState(getToday);
+  const [report, setReport] = useState<ReportSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const transactions = useMemo(
-    () => expandInstallments(BASE_TRANSACTIONS),
-    [],
+  const loadReport = async () => {
+    if (!startDate || !endDate) {
+      setLoadError("Please select a valid date range.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      setLoadError("Start date must be before end date.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const query = new URLSearchParams({
+        startDate,
+        endDate,
+      });
+      const response = await authFetch(
+        `/api/v1/reports/summary?${query.toString()}`,
+      );
+      const payload = await parseApiResponse<ReportSummary>(response);
+      setReport(payload);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Unable to load report.");
+      setReport(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const monthlySeries = report?.monthlySeries ?? [];
+  const monthlyTrend = useMemo(
+    () =>
+      monthlySeries.map((item) => ({
+        month: item.label,
+        income: item.incomeTry,
+        expenses: item.expenseTry,
+        savings: item.netSavingsTry,
+      })),
+    [monthlySeries],
   );
-
-  const budgets = useMemo(
-    () => buildBudgets(usdSalary, USD_TRY_RATE, transactions),
-    [transactions, usdSalary],
-  );
-
-  const monthlyTrend = budgets.map((budget) => ({
-    month: budget.label,
-    income: budget.incomeTry,
-    expenses: budget.expensesTry,
-    savings: budget.netSavingsTry,
-  }));
 
   const categoryData = useMemo(() => {
-    const categoryMap = new Map<string, number>();
-    
-    budgets.forEach((budget) => {
-      budget.categories.forEach((cat) => {
-        const current = categoryMap.get(cat.category) || 0;
-        categoryMap.set(cat.category, current + cat.spentTry);
-      });
-    });
-
-    return Array.from(categoryMap.entries())
-      .map(([category, total]) => ({
-        category,
-        total,
-        color: CATEGORY_COLORS[category] || CATEGORY_COLORS.Other,
+    const breakdown = report?.categoryBreakdown ?? [];
+    return breakdown
+      .map((entry, index) => ({
+        category: entry.categoryLabel,
+        total: entry.totalTry,
+        color:
+          CATEGORY_COLORS[entry.categoryLabel] ??
+          CATEGORY_PALETTE[index % CATEGORY_PALETTE.length],
       }))
       .sort((a, b) => b.total - a.total);
-  }, [budgets]);
+  }, [report?.categoryBreakdown]);
 
-  const totalIncome = budgets.reduce((sum, b) => sum + b.incomeTry, 0);
-  const totalExpenses = budgets.reduce((sum, b) => sum + b.expensesTry, 0);
-  const totalSavings = totalIncome - totalExpenses;
-  const savingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
+  const totals = report?.totals;
+  const averages = report?.averages;
+  const totalIncome = totals?.incomeTry ?? 0;
+  const totalExpenses = totals?.expenseTry ?? 0;
+  const totalSavings = totals?.netSavingsTry ?? 0;
+  const savingsRate = totals?.savingsRatePct ?? 0;
+  const avgMonthlyIncome = averages?.monthlyIncomeTry ?? 0;
+  const avgMonthlyExpenses = averages?.monthlyExpenseTry ?? 0;
+  const avgMonthlySavings = averages?.monthlySavingsTry ?? 0;
 
-  const avgMonthlyIncome = totalIncome / budgets.length;
-  const avgMonthlyExpenses = totalExpenses / budgets.length;
-  const avgMonthlySavings = totalSavings / budgets.length;
+  const bestSavings = useMemo(() => {
+    if (monthlySeries.length === 0) {
+      return null;
+    }
+    return monthlySeries.reduce((best, current) =>
+      current.netSavingsTry > best.netSavingsTry ? current : best,
+    );
+  }, [monthlySeries]);
+
+  const worstExpense = useMemo(() => {
+    if (monthlySeries.length === 0) {
+      return null;
+    }
+    return monthlySeries.reduce((worst, current) =>
+      current.expenseTry > worst.expenseTry ? current : worst,
+    );
+  }, [monthlySeries]);
+  const reportingLabel = report?.range
+    ? `${report.range.start} - ${report.range.end}`
+    : "";
 
   const handleExport = () => {
+    if (!report) {
+      return;
+    }
+
     const reportData = {
-      generatedAt: new Date().toISOString(),
-      summary: {
-        totalIncome,
-        totalExpenses,
-        totalSavings,
-        savingsRate,
-        avgMonthlyIncome,
-        avgMonthlyExpenses,
-        avgMonthlySavings,
-      },
-      monthlyData: budgets,
-      categoryBreakdown: categoryData,
+      generatedAt: report.metadata?.generatedAt ?? new Date().toISOString(),
+      range: report.range,
+      totals: report.totals,
+      averages: report.averages,
+      monthlySeries: report.monthlySeries,
+      categoryBreakdown: report.categoryBreakdown,
+      topCategory: report.topCategory,
     };
 
     const blob = new Blob([JSON.stringify(reportData, null, 2)], {
@@ -149,6 +264,31 @@ export default function ReportsClient() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">Date Range</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground"
+                />
+                <span className="text-muted-foreground">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground"
+                />
+                <button
+                  type="button"
+                  onClick={loadReport}
+                  className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
+                >
+                  Run
+                </button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
               <p className="text-xs text-muted-foreground">Report View</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {[
@@ -176,6 +316,7 @@ export default function ReportsClient() {
             <button
               type="button"
               onClick={handleExport}
+              disabled={!report}
               className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
               <Download className="h-4 w-4" />
@@ -186,6 +327,21 @@ export default function ReportsClient() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+        {loadError && (
+          <p className="mb-4 text-sm text-rose-400">{loadError}</p>
+        )}
+        {isLoading && (
+          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
+            <p className="text-sm text-muted-foreground">Loading report...</p>
+          </div>
+        )}
+        {!isLoading && !report && !loadError && (
+          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              Select a date range and run the report.
+            </p>
+          </div>
+        )}
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card/70 p-5">
             <p className="text-xs text-muted-foreground">Total Income</p>
@@ -349,15 +505,8 @@ export default function ReportsClient() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold">Best Savings Month</p>
                         <p className="text-xs text-muted-foreground">
-                          {
-                            budgets.reduce((best, current) =>
-                              current.netSavingsTry > best.netSavingsTry ? current : best
-                            ).label
-                          }{" "}
-                          with{" "}
-                          {formatCurrency(
-                            Math.max(...budgets.map((b) => b.netSavingsTry)),
-                          )}
+                          {bestSavings?.label ?? "-"} with{" "}
+                          {formatCurrency(bestSavings?.netSavingsTry ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -371,13 +520,8 @@ export default function ReportsClient() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold">Highest Expense Month</p>
                         <p className="text-xs text-muted-foreground">
-                          {
-                            budgets.reduce((worst, current) =>
-                              current.expensesTry > worst.expensesTry ? current : worst
-                            ).label
-                          }{" "}
-                          with{" "}
-                          {formatCurrency(Math.max(...budgets.map((b) => b.expensesTry)))}
+                          {worstExpense?.label ?? "-"} with{" "}
+                          {formatCurrency(worstExpense?.expenseTry ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -391,7 +535,8 @@ export default function ReportsClient() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold">Top Spending Category</p>
                         <p className="text-xs text-muted-foreground">
-                          {categoryData[0]?.category} - {formatCurrency(categoryData[0]?.total || 0)}
+                          {report?.topCategory?.categoryLabel ?? "-"} -{" "}
+                          {formatCurrency(report?.topCategory?.totalTry ?? 0)}
                         </p>
                       </div>
                     </div>
@@ -405,8 +550,7 @@ export default function ReportsClient() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold">Reporting Period</p>
                         <p className="text-xs text-muted-foreground">
-                          {budgets[0]?.label} - {budgets[budgets.length - 1]?.label} (
-                          {budgets.length} months)
+                          {reportingLabel || "-"} ({monthlySeries.length} months)
                         </p>
                       </div>
                     </div>
@@ -551,51 +695,43 @@ export default function ReportsClient() {
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-xl border border-border bg-background/60 p-5">
-                  <p className="text-sm font-semibold">Post-Debt Clearance (April+)</p>
+                  <p className="text-sm font-semibold">Best Savings Month</p>
                   <p className="mt-2 text-2xl font-bold text-emerald-400">
-                    {formatCurrency(
-                      budgets.find((b) => b.month === "2026-04")?.netSavingsTry || 0,
-                    )}
+                    {formatCurrency(bestSavings?.netSavingsTry ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Expected monthly savings after clearing 20,000 TL debt
+                    {bestSavings?.label ?? "No data"}
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-background/60 p-5">
-                  <p className="text-sm font-semibold">March Boss Fight</p>
+                  <p className="text-sm font-semibold">Highest Expense Month</p>
                   <p className="mt-2 text-2xl font-bold text-rose-400">
-                    {formatCurrency(
-                      budgets.find((b) => b.month === "2026-03")?.netSavingsTry || 0,
-                    )}
+                    {formatCurrency(worstExpense?.expenseTry ?? 0)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Critical month with debt + installments
+                    {worstExpense?.label ?? "No data"}
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-background/60 p-5">
-                  <p className="text-sm font-semibold">6-Month Projection</p>
+                  <p className="text-sm font-semibold">Total Savings</p>
                   <p className="mt-2 text-2xl font-bold text-primary">
                     {formatCurrency(totalSavings)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Cumulative savings from Feb to Jun 2026
+                    Net savings across the selected range
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-border bg-background/60 p-5">
-                  <p className="text-sm font-semibold">Freedom Index</p>
+                  <p className="text-sm font-semibold">Savings Rate</p>
                   <p className="mt-2 text-2xl font-bold text-sky-400">
-                    {formatNumber(
-                      ((budgets.find((b) => b.month === "2026-04")?.netSavingsTry || 0) /
-                        avgMonthlySavings) *
-                        100,
-                    )}
+                    {formatNumber(savingsRate)}
                     %
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    April savings vs average (higher is better)
+                    Overall savings rate for the range
                   </p>
                 </div>
               </div>
@@ -603,10 +739,8 @@ export default function ReportsClient() {
               <div className="mt-6 rounded-xl bg-primary/10 p-4">
                 <p className="text-sm font-semibold text-primary">💡 Forecast Insight</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Once the 20,000 TL debt to your father is cleared in March, your net
-                  savings will jump significantly starting April 2026. This is your
-                  &quot;Nisan Freedom&quot; - prepare to maximize this opportunity by setting up
-                  emergency funds or investment contributions.
+                  Keep your savings rate above 20% to strengthen long-term financial
+                  resilience. Review top categories to identify possible reductions.
                 </p>
               </div>
             </div>
