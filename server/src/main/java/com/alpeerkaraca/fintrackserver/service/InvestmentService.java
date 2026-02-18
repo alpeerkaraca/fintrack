@@ -33,6 +33,7 @@ public class InvestmentService {
     private final PriceService priceService;
     private final UserProfileRepository userProfileRepository;
     private final MarketDataService marketDataService;
+    private final CacheService cacheService;
 
 
     public List<InvestmentAssetDto> getUserPortfolio(UUID userId) {
@@ -67,6 +68,7 @@ public class InvestmentService {
                 .build();
         InvestmentAsset savedAsset = assetRepository.save(newAsset);
         log.info("Added new asset for user {}: {}", userId, savedAsset.getSymbol());
+        cacheService.evictAllUserCaches(userId);
         return convertToDto(savedAsset);
 
     }
@@ -98,6 +100,7 @@ public class InvestmentService {
 
         log.info("Updated asset {}: New AvgCostOriginal: {}, New TotalCostTry: {}",
                 asset.getSymbol(), asset.getAvgCostOriginal(), asset.getTotalCostTry());
+        cacheService.evictAllUserCaches(userId);
 
         return convertToDto(asset);
     }
@@ -108,6 +111,7 @@ public class InvestmentService {
             InvestmentAsset existingInvestment = assetRepository.findByIdAndUserProfileId(assetId, userId)
                     .orElseThrow(() -> new AssetNotFoundException("Asset not found for id: " + assetId));
             assetRepository.delete(existingInvestment);
+            cacheService.evictAllUserCaches(userId);
             log.info("Deleted asset {} for user {}", assetId, userId);
         } catch (AssetNotFoundException e) {
             throw e;
@@ -121,14 +125,14 @@ public class InvestmentService {
     private InvestmentAssetDto convertToDto(InvestmentAsset asset) {
         BigDecimal currentPriceTry = getCurrentPrice(asset);
         BigDecimal currentPriceOriginal = asset.getStockMarket().getCurrency().equalsIgnoreCase("TRY") ?
-                currentPriceTry : currentPriceTry.divide(marketDataService.getUsdToTryInfo().price(), 2, RoundingMode.HALF_UP);
+                currentPriceTry : currentPriceTry.divide(marketDataService.getUsdToTryInfo().price(), 6, RoundingMode.HALF_UP);
 
         BigDecimal totalValue = asset.getQuantity().multiply(currentPriceTry);
         BigDecimal profitLoss = totalValue.subtract(asset.getTotalCostTry());
 
         BigDecimal changePercent = BigDecimal.ZERO;
         if (asset.getTotalCostTry().compareTo(BigDecimal.ZERO) > 0) {
-            changePercent = profitLoss.divide(asset.getTotalCostTry(), 2, RoundingMode.HALF_UP)
+            changePercent = profitLoss.divide(asset.getTotalCostTry(), 6, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
         return InvestmentAssetDto.builder()
@@ -136,7 +140,7 @@ public class InvestmentService {
                 .symbol(asset.getSymbol())
                 .name(asset.getName())
                 .quantity(asset.getQuantity())
-                .avgCostTry(asset.getTotalCostTry().divide(asset.getQuantity(), 2, RoundingMode.HALF_UP))
+                .avgCostTry(asset.getTotalCostTry().divide(asset.getQuantity(), 6, RoundingMode.HALF_UP))
                 .currentPriceTry(currentPriceTry)
                 .avgCostOriginal(asset.getAvgCostOriginal())
                 .currentPriceOriginal(currentPriceOriginal)
