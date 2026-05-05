@@ -135,10 +135,10 @@ export default function BudgetEntryClient() {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.size === monthlyTransactions.length) {
+    if (selectedIds.size === filteredTransactions.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(monthlyTransactions.map((t) => t.id)));
+      setSelectedIds(new Set(filteredTransactions.map((t) => t.id)));
     }
   };
 
@@ -741,8 +741,8 @@ export default function BudgetEntryClient() {
               <input
                 type="checkbox"
                 checked={
-                  monthlyTransactions.length > 0 &&
-                  selectedIds.size === monthlyTransactions.length
+                  filteredTransactions.length > 0 &&
+                  selectedIds.size === filteredTransactions.length
                 }
                 onChange={handleSelectAll}
                 className="h-4 w-4 rounded border-border"
@@ -768,7 +768,7 @@ export default function BudgetEntryClient() {
                 </button>
               )}
               <span className="text-sm text-muted-foreground">
-                {monthlyTransactions.length} total
+                {filteredTransactions.length} total
               </span>
             </div>
           </div>
