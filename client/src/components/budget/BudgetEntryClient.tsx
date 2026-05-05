@@ -44,6 +44,7 @@ const getCurrentMonthKey = () => {
 export default function BudgetEntryClient() {
   const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedLimit, setSelectedLimit] = useState("15");
@@ -120,6 +121,46 @@ export default function BudgetEntryClient() {
       setCategoryFilter(category);
     }
   }, [searchParams]);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredTransactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredTransactions.map((t) => t.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setIsLoading(true);
+    try {
+      await authFetch("/api/v1/transactions/bulk", {
+        method: "DELETE",
+        body: JSON.stringify(Array.from(selectedIds)),
+      });
+      
+      setTransactions((prev) => prev.filter((t) => !selectedIds.has(t.id)));
+      setSelectedIds(new Set());
+      openModal("success", `${selectedIds.size} transactions deleted.`);
+    } catch (err) {
+      openModal("error", err instanceof Error ? err.message : "Failed to delete transactions.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let isActive = true;
@@ -696,32 +737,40 @@ export default function BudgetEntryClient() {
 
         <div className="rounded-2xl border border-border bg-card/70 p-6">
           <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Transactions
-              </p>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              <input
+                type="checkbox"
+                checked={
+                  filteredTransactions.length > 0 &&
+                  selectedIds.size === filteredTransactions.length
+                }
+                onChange={handleSelectAll}
+                className="h-4 w-4 rounded border-border"
+              />
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Transactions
+                </p>
                 <h2 className="text-lg font-semibold">
                   {monthOptions.find((m) => m.value === selectedMonth)?.label}
                 </h2>
-                {categoryFilter && (
-                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    <Filter className="h-3 w-3" />
-                    {getCategoryLabel(categoryFilter)}
-                    <button
-                      type="button"
-                      onClick={() => setCategoryFilter(null)}
-                      className="ml-1 rounded-full hover:bg-primary/20 p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {filteredTransactions.length} total
-            </span>
+            <div className="flex items-center gap-4">
+              {selectedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2 rounded-xl bg-rose-500/10 px-4 py-2 text-xs font-medium text-rose-400 transition hover:bg-rose-500/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete Selected ({selectedIds.size})
+                </button>
+              )}
+              <span className="text-sm text-muted-foreground">
+                {filteredTransactions.length} total
+              </span>
+            </div>
           </div>
 
           {loadError && (
@@ -752,9 +801,20 @@ export default function BudgetEntryClient() {
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-5 py-4 transition hover:bg-muted/30"
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border border-border bg-background/60 px-5 py-4 transition",
+                    selectedIds.has(transaction.id)
+                      ? "border-primary/40 bg-primary/5"
+                      : "hover:bg-muted/30",
+                  )}
                 >
                   <div className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(transaction.id)}
+                      onChange={() => handleToggleSelect(transaction.id)}
+                      className="h-4 w-4 rounded border-border"
+                    />
                     <div
                       className={cn(
                         "rounded-full p-2.5",
@@ -798,7 +858,10 @@ export default function BudgetEntryClient() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => handleDelete(transaction.id)}
+                      onClick={() => {
+                        setSelectedIds(new Set([transaction.id]));
+                        handleBulkDelete();
+                      }}
                       className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
                     >
                       <Trash2 className="h-4 w-4" />

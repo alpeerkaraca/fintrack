@@ -55,4 +55,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
 
     @Query(value = "SELECT uuidv7()", nativeQuery = true)
     UUID generateUuidv7();
+
+    void deleteByIdInAndUserProfileId(List<UUID> ids, UUID userProfileId);
 }
