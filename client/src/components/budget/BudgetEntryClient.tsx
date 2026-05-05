@@ -59,10 +59,10 @@ export default function BudgetEntryClient() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [modal, setModal] = useState<
     | {
-        type: "success" | "error";
-        title: string;
-        message: string;
-      }
+      type: "success" | "error";
+      title: string;
+      message: string;
+    }
     | null
   >(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -121,7 +121,10 @@ export default function BudgetEntryClient() {
     }
   }, [searchParams]);
 
-  const loadTransactions = async (monthKey: string, limit: string) => {
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMonthOptions = async () => {
       try {
         const response = await authFetch("/api/v1/metadata/available-months");
         const payload = await parseApiResponse<{ value: string; label: string }[]>(response);
@@ -259,10 +262,10 @@ export default function BudgetEntryClient() {
       installmentMeta:
         isExpense && formData.isInstallment
           ? {
-              totalTry: amount,
-              months: installmentMonths,
-              startMonth: formData.date.slice(0, 7),
-            }
+            totalTry: amount,
+            months: installmentMonths,
+            startMonth: formData.date.slice(0, 7),
+          }
           : undefined,
     };
 
@@ -321,11 +324,11 @@ export default function BudgetEntryClient() {
     );
   };
 
-  const totalIncome = monthlyTransactions
+  const totalIncome = filteredTransactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
-  const totalExpenses = monthlyTransactions
+  const totalExpenses = filteredTransactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
@@ -398,7 +401,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalIncome)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {monthlyTransactions.filter((t) => t.type === "income").length}{" "}
+                  {filteredTransactions.filter((t) => t.type === "income").length}{" "}
                   transactions
                 </p>
               </div>
@@ -416,7 +419,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalExpenses)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {monthlyTransactions.filter((t) => t.type === "expense").length}{" "}
+                  {filteredTransactions.filter((t) => t.type === "expense").length}{" "}
                   transactions
                 </p>
               </div>
@@ -732,7 +735,7 @@ export default function BudgetEntryClient() {
           ) : filteredTransactions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
               <p className="text-sm text-muted-foreground">
-                {categoryFilter 
+                {categoryFilter
                   ? `No transactions found for ${getCategoryLabel(categoryFilter)}`
                   : "No transactions found for this month"}
               </p>
