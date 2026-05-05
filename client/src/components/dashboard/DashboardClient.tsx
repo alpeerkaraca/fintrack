@@ -52,6 +52,16 @@ type CategoryWatchlistItem = {
   alertLevel?: "normal" | "warning" | "danger";
 };
 
+type SavingsGoal = {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  currency: string;
+  targetDate?: string;
+  progressPercent: number;
+};
+
 type TransactionPage = {
   content?: Transaction[];
   pageNumber?: number;
@@ -69,6 +79,7 @@ type DashboardOverview = {
   forecast: DashboardForecastItem[];
   categoryWatchlist: CategoryWatchlistItem[];
   investments: InvestmentAsset[];
+  savingsGoals: SavingsGoal[];
   currentUsdTryRate?: number;
   recentTransactions?: TransactionPage;
 };
@@ -460,50 +471,7 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Budget Limits
-                </p>
-                <h3 className="text-lg font-semibold">Category Watchlist</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
-            </div>
-            <div className="mt-5 grid gap-4">
-              {(dashboard?.categoryWatchlist ?? []).map((category) => {
-                const state = getLimitState(category);
-                const ratio =
-                  category.limitTry > 0
-                    ? Math.min((category.spentTry / category.limitTry) * 100, 100)
-                    : 0;
-                return (
-                  <div key={category.category}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{getCategoryLabel(category.category)}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
-                      </span>
-                    </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
-                      <div
-                        className={cn(
-                          "h-2 rounded-full",
-                          state === "danger"
-                            ? "bg-rose-500"
-                            : state === "warning"
-                              ? "bg-amber-400"
-                              : "bg-emerald-500",
-                        )}
-                        style={{ width: `${ratio}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card/60 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -515,100 +483,89 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">Latest snapshot</span>
             </div>
             <div className="mt-5 space-y-4">
-              {(dashboard?.investments ?? []).map((asset) => (
-                <div
-                  key={asset.symbol}
-                  className="rounded-xl border border-border bg-background/60 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold">{asset.symbol}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatAssetName(asset.name)}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
-                      </p>
-                    </div>
-                    <div
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs",
-                        asset.changePercent >= 0
-                          ? "bg-emerald-500/10 text-emerald-300"
-                          : "bg-rose-500/10 text-rose-300",
-                      )}
-                    >
-                      {asset.changePercent >= 0 ? "+" : ""}
-                      {asset.changePercent.toFixed(2)}%
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
-                    <div>
-                      <p>Quantity</p>
-                      <p className="text-sm font-semibold text-foreground">
-                        {asset.quantity}
-                      </p>
-                    </div>
-                    <div>
-                      <p>Avg Cost</p>
-                      <div className="mt-1 space-y-1 text-foreground">
-                        <p className="flex items-center gap-1 text-sm font-semibold">
-                          <TurkishLira className="h-3.5 w-3.5" />
-                          {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+              {(dashboard?.investments ?? []).length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center">
+                  <p className="text-xs text-muted-foreground">No active investments</p>
+                </div>
+              ) : (
+                (dashboard?.investments ?? []).map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    className="rounded-xl border border-border bg-background/60 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">{asset.symbol}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatAssetName(asset.name)}
                         </p>
-                        {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            {(() => {
-                              const Icon = getCurrencyIcon(asset.originalCurrency);
-                              return <Icon className="h-3 w-3" />;
-                            })()}
-                            {formatCurrencyTrimZeros(
-                              asset.avgCostOriginal ?? asset.avgCostTry,
-                              asset.originalCurrency,
-                              6,
-                            )}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                    <div>
-                      <p>Current Price</p>
-                      <div className="mt-1 space-y-1 text-foreground">
-                        <p className="flex items-center gap-1 text-sm font-semibold">
-                          <TurkishLira className="h-3.5 w-3.5" />
-                          {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
-                        </p>
-                        {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            {(() => {
-                              const Icon = getCurrencyIcon(asset.originalCurrency);
-                              return <Icon className="h-3 w-3" />;
-                            })()}
-                            {formatCurrencyTrimZeros(
-                              asset.currentPriceOriginal ?? asset.currentPriceTry,
-                              asset.originalCurrency,
-                              6,
-                            )}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <p>P/L</p>
-                      <p
+                      <div
                         className={cn(
-                          "text-sm font-semibold",
-                          asset.profitLossTry >= 0
-                            ? "text-emerald-400"
-                            : "text-rose-400",
+                          "rounded-full px-3 py-1 text-xs",
+                          asset.changePercent >= 0
+                            ? "bg-emerald-500/10 text-emerald-300"
+                            : "bg-rose-500/10 text-rose-300",
                         )}
                       >
-                        {formatCurrency(asset.profitLossTry)}
-                      </p>
+                        {asset.changePercent >= 0 ? "+" : ""}
+                        {asset.changePercent.toFixed(2)}%
+                      </div>
                     </div>
                   </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card/60 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Targets
+                </p>
+                <h3 className="text-lg font-semibold">Savings Goals</h3>
+              </div>
+              <button className="text-xs text-primary hover:underline">
+                View All
+              </button>
+            </div>
+            <div className="mt-5 space-y-5">
+              {(dashboard?.savingsGoals ?? []).length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center">
+                  <p className="text-xs text-muted-foreground">No active goals yet</p>
                 </div>
-              ))}
+              ) : (
+                (dashboard?.savingsGoals ?? []).map((goal) => (
+                  <div key={goal.id}>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{goal.title}</span>
+                        {goal.targetDate && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Target: {goal.targetDate}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="font-semibold">
+                          %{goal.progressPercent.toFixed(0)}
+                        </span>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatCurrency(goal.targetAmount - goal.currentAmount)}{" "}
+                          left
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
+                      <div
+                        className="h-2 rounded-full bg-primary transition-all duration-500"
+                        style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

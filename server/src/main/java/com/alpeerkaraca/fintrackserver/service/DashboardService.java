@@ -21,6 +21,7 @@ public class DashboardService {
     private final InvestmentService investmentService;
     private final MarketDataService marketDataService;
     private final TransactionService transactionService;
+    private final SavingsGoalService savingsGoalService;
 
     @Cacheable(value = "overviews",
             key = "T(String).format('%s:%04d-%02d', #userId, #year, #month)")
@@ -49,12 +50,14 @@ public class DashboardService {
                 .build();
 
         Page<TransactionDto> recentTransactions = transactionService.getFilteredTransactions(userId, filter, pageable, true);
+        List<SavingsGoalDto> savingsGoals = savingsGoalService.getGoals(userId);
 
         return DashboardOverviewResponse.builder()
                 .summary(core.getSummary())
                 .forecast(core.getForecast())
                 .categoryWatchlist(core.getCategoryWatchlist())
                 .investments(core.getInvestments())
+                .savingsGoals(savingsGoals)
                 .currentUsdTryRate(core.getCurrentUsdTryRate())
                 .recentTransactions(PageDtos.of(recentTransactions))
                 .build();
