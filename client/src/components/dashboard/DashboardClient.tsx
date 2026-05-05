@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Area,
   AreaChart,
@@ -583,9 +584,10 @@ export default function DashboardClient() {
             </div>
             <div className="mt-5 space-y-4">
               {latestTransactions.map((transaction) => (
-                <div
+                <Link
                   key={transaction.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
+                  href={`/budget?category=${transaction.category}`}
+                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 transition hover:bg-muted/40"
                 >
                   <div>
                     <p className="text-sm font-semibold">{transaction.title}</p>
@@ -604,7 +606,7 @@ export default function DashboardClient() {
                     {transaction.type === "expense" ? "-" : "+"}
                     {formatCurrency(transaction.amountTry)}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
