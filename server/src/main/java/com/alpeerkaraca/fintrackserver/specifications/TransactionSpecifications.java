@@ -48,6 +48,10 @@ public class TransactionSpecifications {
                 predicates.add(cb.equal(cb.lower(root.get("category")), filter.getCategory().toLowerCase()));
             }
 
+            if (filter.getQuery() != null && !filter.getQuery().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + filter.getQuery().toLowerCase() + "%"));
+            }
+
             if (filter.getMonth() != null && filter.getYear() != null) {
                 LocalDate targetStart = LocalDate.of(filter.getYear(), filter.getMonth(), 1);
                 LocalDate targetEnd = targetStart.withDayOfMonth(targetStart.lengthOfMonth());

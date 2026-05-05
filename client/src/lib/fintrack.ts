@@ -403,3 +403,27 @@ export const formatNumber = (value: number) =>
 
 export const getInstallmentSummary = (transactions: Transaction[]) =>
   transactions.filter((transaction) => transaction.category === "Installment");
+
+const BASE = `${process.env.NEXT_PUBLIC_API_BASE_URL}${process.env.NEXT_PUBLIC_API_PREFIX}`;
+
+export const API = {
+  transactions: {
+    list: (query?: string, size = 10) => {
+      const params = new URLSearchParams();
+      if (query) params.append("query", query);
+      params.append("size", size.toString());
+      return `${BASE}/transactions?${params.toString()}`;
+    },
+    delete: (id: string) => `${BASE}/transactions/${id}`,
+    bulkDelete: () => `${BASE}/transactions/bulk`,
+  },
+  budgets: {
+    summary: (month: number, year: number) => `${BASE}/budgets/summary?month=${month}&year=${year}`,
+    watchlist: (month: number, year: number) => `${BASE}/budgets/watchlist?month=${month}&year=${year}`,
+    forecast: () => `${BASE}/budgets/forecast`,
+    alerts: () => `${BASE}/budgets/alerts`,
+  },
+  marketData: {
+    usdTry: () => `${BASE}/market-data/usd-try`,
+  },
+};

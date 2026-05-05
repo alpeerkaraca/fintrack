@@ -123,7 +123,11 @@ public class BudgetService {
             categoryList = new ArrayList<>();
         }
 
-        TransactionFilter filter = new TransactionFilter(month, year, null, null, true);
+        TransactionFilter filter = TransactionFilter.builder()
+                .month(month)
+                .year(year)
+                .expanded(true)
+                .build();
         List<TransactionDto> monthlyTransactions = transactionService.getFilteredTransactions(userId, filter);
 
         return categoryList.stream().map(cat -> {
