@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/transactions")
@@ -49,5 +50,21 @@ public class TransactionController {
                 transactionDto);
 
         return ResponseEntity.ok(ApiResponse.success(res));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        transactionService.deleteTransaction(id, userPrincipal.id());
+        return ResponseEntity.ok(ApiResponse.success("Transaction deleted successfully"));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<Void>> deleteTransactions(
+            @RequestBody List<UUID> ids,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        transactionService.deleteTransactions(ids, userPrincipal.id());
+        return ResponseEntity.ok(ApiResponse.success("Transactions deleted successfully"));
     }
 }
