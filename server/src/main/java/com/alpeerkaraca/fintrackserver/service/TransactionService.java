@@ -110,6 +110,7 @@ public class TransactionService {
                     : dto.getAmountTry();
             UserProfile userProfile = userProfileRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
             Transaction transaction = Transaction.builder()
+                    .id(transactionRepository.generateUuidv7())
                     .userProfile(userProfile)
                     .title(dto.getTitle())
                     .amountTry(monthlyAmount)

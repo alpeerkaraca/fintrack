@@ -1,9 +1,19 @@
 spring:
   application:
     name: fintrack-server
+    
   jackson:
     deserialization:
       use-big-decimal-for-floats: true
+    
 
 server:
   port: 8080
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:86400000}
+    refresh-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
+    issuer: ${APP_JWT_ISSUER:fintrack-server}
+    audience: ${APP_JWT_AUDIENCE:fintrack-client}

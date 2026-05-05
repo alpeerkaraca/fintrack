@@ -73,6 +73,11 @@ type DashboardOverview = {
   recentTransactions?: TransactionPage;
 };
 
+type MonthOption = {
+  value: string;
+  label: string;
+};
+
 const getCurrentMonthKey = () => {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -121,6 +126,7 @@ export default function DashboardClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryMeta[]>([]);
+  const [monthOptions, setMonthOptions] = useState<MonthOption[]>([]);
 
   const categoryMap = useMemo(() => {
     return new Map(categories.map((category) => [category.id, category.label]));
@@ -129,6 +135,30 @@ export default function DashboardClient() {
   const getCategoryLabel = (categoryId: string) => {
     return categoryMap.get(categoryId) ?? categoryId;
   };
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMonthOptions = async () => {
+      try {
+        const response = await authFetch("/api/v1/metadata/available-months");
+        const payload = await parseApiResponse<MonthOption[]>(response);
+        if (isActive) {
+          setMonthOptions(payload ?? []);
+        }
+      } catch {
+        // Fallback to current month if fetch fails
+        if (isActive) {
+          setMonthOptions([{ value: getCurrentMonthKey(), label: "Current Month" }]);
+        }
+      }
+    };
+
+    loadMonthOptions();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -162,14 +192,6 @@ export default function DashboardClient() {
         }
 
         setDashboard(payload);
-        if (payload.forecast?.length) {
-          const hasSelected = payload.forecast.some(
-            (item) => item.month === selectedMonth,
-          );
-          if (!hasSelected && payload.forecast[0].month !== selectedMonth) {
-            setSelectedMonth(payload.forecast[0].month);
-          }
-        }
       } catch (err) {
         if (!isActive) {
           return;
@@ -212,10 +234,9 @@ export default function DashboardClient() {
   }, []);
 
   const forecast = dashboard?.forecast ?? [];
-  const selectedForecast =
-    forecast.find((item) => item.month === selectedMonth) ?? forecast[0];
+  const selectedMonthLabel =
+    monthOptions.find((m) => m.value === selectedMonth)?.label ?? selectedMonth;
   const summary = dashboard?.summary;
-  const currentLabel = selectedForecast?.label ?? selectedMonth;
   const currentUsdRate =
     dashboard?.currentUsdTryRate ?? dashboard?.summary.usdRate ?? 0;
   const recentTransactions = dashboard?.recentTransactions?.content ?? [];
@@ -257,22 +278,16 @@ export default function DashboardClient() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-              <p className="text-xs text-muted-foreground">USD/TRY Rate</p>
-              <div className="mt-2 text-sm font-semibold">
-                {formatNumber(currentUsdRate)}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
               <p className="text-xs text-muted-foreground">Month</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {forecast.map((item) => (
+                {monthOptions.map((item) => (
                   <button
-                    key={item.month}
+                    key={item.value}
                     type="button"
-                    onClick={() => setSelectedMonth(item.month)}
+                    onClick={() => setSelectedMonth(item.value)}
                     className={cn(
                       "rounded-lg px-3 py-1 text-xs transition",
-                      item.month === selectedMonth
+                      item.value === selectedMonth
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/70 text-muted-foreground hover:text-foreground",
                     )}
@@ -358,7 +373,7 @@ export default function DashboardClient() {
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Boss Fight
                 </p>
-                <h3 className="text-lg font-semibold">{currentLabel} Alert</h3>
+                <h3 className="text-lg font-semibold">{selectedMonthLabel} Alert</h3>
               </div>
               <span
                 className={cn(
@@ -454,7 +469,7 @@ export default function DashboardClient() {
                 </p>
                 <h3 className="text-lg font-semibold">Category Watchlist</h3>
               </div>
-              <span className="text-xs text-muted-foreground">{currentLabel}</span>
+              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
             </div>
             <div className="mt-5 grid gap-4">
               {(dashboard?.categoryWatchlist ?? []).map((category) => {
@@ -607,7 +622,7 @@ export default function DashboardClient() {
                 </p>
                 <h3 className="text-lg font-semibold">Latest Activity</h3>
               </div>
-              <span className="text-xs text-muted-foreground">{currentLabel}</span>
+              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
             </div>
             <div className="mt-5 space-y-4">
               {latestTransactions.map((transaction) => (

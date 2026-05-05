@@ -56,6 +56,7 @@ public class InvestmentService {
         BigDecimal totalCostTry = dto.getAvgCost().multiply(dto.getQuantity()).multiply(rate);
 
         InvestmentAsset newAsset = InvestmentAsset.builder()
+                .id(assetRepository.generateUuidv7())
                 .userProfile(userProfile)
                 .symbol(dto.getAssetType() == AssetType.GOLD_SILVER ? dto.getSymbol().toLowerCase() : dto.getSymbol().toUpperCase())
                 .name(assetInfo.name())

@@ -6,6 +6,7 @@ import com.alpeerkaraca.fintrackserver.dto.TokenPair;
 import com.alpeerkaraca.fintrackserver.security.AuthCookies;
 import com.alpeerkaraca.fintrackserver.security.JwtService;
 import com.alpeerkaraca.fintrackserver.service.AuthService;
+import com.alpeerkaraca.fintrackserver.service.RateLimitingService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +46,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
+    @MockitoBean
+    private RateLimitingService rateLimitingService;
+
     private AuthResult testAuthResult;
     private TokenPair testTokenPair;
 
@@ -57,6 +61,7 @@ class AuthControllerTest {
                 BigDecimal.valueOf(5000)
         );
         testTokenPair = new TokenPair("access.jwt.token", "refresh.jwt.token");
+        when(rateLimitingService.isAllowed(anyString(), any())).thenReturn(true);
     }
 
     @Test
