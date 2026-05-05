@@ -15,4 +15,7 @@ public interface BudgetCategoryRepository extends JpaRepository<BudgetCategory, 
     @Query("SELECT bc FROM BudgetCategory bc WHERE bc.userProfile.id = :userId")
     List<BudgetCategory> findByUserId(UUID userId);
 
+    @Query(value = "SELECT uuidv7()", nativeQuery = true)
+    UUID generateUuidv7();
+
 }

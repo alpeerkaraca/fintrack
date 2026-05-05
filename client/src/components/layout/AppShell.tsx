@@ -79,7 +79,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex flex-col lg:flex-row">
-        <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-border bg-card/60">
+        <aside className="flex h-full w-full flex-col border-b border-border bg-card/60 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
           <div className="px-6 py-7 flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary grid place-items-center font-semibold">
               FT
@@ -89,7 +89,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <h1 className="text-lg font-semibold">FinTrack</h1>
             </div>
           </div>
-          <nav className="px-4 pb-6">
+          <nav className="flex-1 px-4 pb-6">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.label}

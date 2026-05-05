@@ -2,10 +2,13 @@ package com.alpeerkaraca.fintrackserver.controller;
 
 import com.alpeerkaraca.fintrackserver.dto.ApiResponse;
 import com.alpeerkaraca.fintrackserver.dto.frontend.CategoryResponse;
+import com.alpeerkaraca.fintrackserver.dto.frontend.MonthOptionResponse;
 import com.alpeerkaraca.fintrackserver.dto.frontend.StockMarketResponse;
+import com.alpeerkaraca.fintrackserver.security.UserPrincipal;
 import com.alpeerkaraca.fintrackserver.service.MetadataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +39,16 @@ public class MetadataController {
                 )
         );
 
+    }
+
+    @GetMapping("/available-months")
+    public ResponseEntity<ApiResponse<List<MonthOptionResponse>>> getAvailableMonths(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Available months retrieved successfully",
+                        metadataService.getAvailableMonths(userPrincipal.id())
+                )
+        );
     }
 }

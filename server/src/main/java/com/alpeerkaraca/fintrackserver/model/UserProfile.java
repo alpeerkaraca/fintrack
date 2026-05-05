@@ -3,6 +3,8 @@ package com.alpeerkaraca.fintrackserver.model;
 import jakarta.persistence.*;
 import lombok.*;
 import net.minidev.json.annotate.JsonIgnore;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -21,11 +23,14 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class UserProfile {
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.UUID)
+    @Column(updatable = false, nullable = false)
     private UUID id;
+    
+    @Column(nullable = false, updatable = false)
+    @Builder.Default
+    private Instant createdAt = Instant.now();
     @Column(nullable = false, unique = true)
     private String username;
     @Column(nullable = false, unique = true)

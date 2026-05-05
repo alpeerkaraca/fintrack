@@ -32,9 +32,16 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "transfer", label: "Bank Transfer" },
 ];
 
+const getCurrentMonthKey = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+};
+
 export default function BudgetEntryClient() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState("2026-02");
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
+  const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedLimit, setSelectedLimit] = useState("15");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,13 +101,28 @@ export default function BudgetEntryClient() {
     b.date.localeCompare(a.date),
   );
 
-  const monthOptions = [
-    { value: "2026-02", label: "Feb 2026" },
-    { value: "2026-03", label: "Mar 2026" },
-    { value: "2026-04", label: "Apr 2026" },
-    { value: "2026-05", label: "May 2026" },
-    { value: "2026-06", label: "Jun 2026" },
-  ];
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMonthOptions = async () => {
+      try {
+        const response = await authFetch("/api/v1/metadata/available-months");
+        const payload = await parseApiResponse<{ value: string; label: string }[]>(response);
+        if (isActive) {
+          setMonthOptions(payload ?? []);
+        }
+      } catch {
+        if (isActive) {
+          setMonthOptions([{ value: getCurrentMonthKey(), label: "Current Month" }]);
+        }
+      }
+    };
+
+    loadMonthOptions();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const loadTransactions = async (monthKey: string, limit: string) => {
     const [year, month] = monthKey.split("-");

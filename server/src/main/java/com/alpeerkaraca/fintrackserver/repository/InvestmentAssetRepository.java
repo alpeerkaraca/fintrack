@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.InvestmentAsset;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,4 +14,7 @@ public interface InvestmentAssetRepository extends JpaRepository<InvestmentAsset
     List<InvestmentAsset> findByUserProfileId(UUID userProfileId);
     boolean existsByUserProfileIdAndSymbol(UUID userProfileId, String symbol);
     Optional<InvestmentAsset> findByIdAndUserProfileId(UUID id, UUID userProfileId);
+
+    @Query(value = "SELECT uuidv7()", nativeQuery = true)
+    UUID generateUuidv7();
 }

@@ -45,6 +45,19 @@ const parseErrorMessage = async (response: Response) => {
   }
 };
 
+export const getCsrfToken = () => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(^|;)\s*XSRF-TOKEN\s*=\s*([^;]+)/);
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
+const getHeaders = (customHeaders?: HeadersInit) => {
+  const headers = new Headers(customHeaders);
+  const csrf = getCsrfToken();
+  if (csrf) headers.set("X-XSRF-TOKEN", csrf);
+  return headers;
+};
+
 const persistSession = (payload: AuthUser) => {
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(payload));
 };
@@ -80,6 +93,7 @@ export const signOut = async () => {
   try {
     await fetch(getAuthApiUrl("logout"), {
       method: "POST",
+      headers: getHeaders(),
       credentials: "include",
     });
   } catch {
@@ -92,7 +106,7 @@ export const signOut = async () => {
 export const login = async (input: { username: string; password: string }) => {
   const response = await fetch(getAuthApiUrl("login"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getHeaders({ "Content-Type": "application/json" }),
     credentials: "include",
     body: JSON.stringify(input),
   });
@@ -114,7 +128,7 @@ export const register = async (input: {
 }) => {
   const response = await fetch(getAuthApiUrl("register"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getHeaders({ "Content-Type": "application/json" }),
     credentials: "include",
     body: JSON.stringify(input),
   });
@@ -138,6 +152,7 @@ const refreshAccessToken = async () => {
   refreshPromise = (async () => {
     const response = await fetch(getAuthApiUrl("refresh"), {
       method: "POST",
+      headers: getHeaders(),
       credentials: "include",
     });
 
@@ -160,7 +175,7 @@ export const authFetch = async (
   init: RequestInit = {},
   retry = true,
 ): Promise<Response> => {
-  const headers = new Headers(init.headers);
+  const headers = getHeaders(init.headers);
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
