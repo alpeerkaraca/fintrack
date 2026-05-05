@@ -2,6 +2,7 @@ package com.alpeerkaraca.fintrackserver.repository;
 
 import com.alpeerkaraca.fintrackserver.model.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -14,4 +15,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, UUID> 
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
+    
+    @Query(value = "SELECT uuidv7()", nativeQuery = true)
+    UUID generateUuidv7();
 }

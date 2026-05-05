@@ -17,13 +17,25 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.alpeerkaraca.fintrackserver.security.JwtSecurityFilter;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import com.alpeerkaraca.fintrackserver.security.CsrfCookieFilter;
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity(debug = false)
 public class WebSecurity {
     private final JwtSecurityFilter jwtSecurityFilter;
+    private final CsrfCookieFilter csrfCookieFilter;
 
-    public WebSecurity(JwtSecurityFilter jwtSecurityFilter) {
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://localhost:3000}")
+    private String allowedOrigins;
+
+    public WebSecurity(JwtSecurityFilter jwtSecurityFilter, CsrfCookieFilter csrfCookieFilter) {
         this.jwtSecurityFilter = jwtSecurityFilter;
+        this.csrfCookieFilter = csrfCookieFilter;
     }
 
     @Bean
@@ -38,17 +50,20 @@ public class WebSecurity {
                 .cors(corsConfig -> corsConfig.configurationSource(
                         (CorsConfigurationSource) request -> {
                             CorsConfiguration corsConfiguration = new CorsConfiguration();
-                            corsConfiguration.setAllowedOriginPatterns(List.of("https://localhost:3000"));
+                            corsConfiguration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
                             corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-                            corsConfiguration.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN"));
+                            corsConfiguration.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "Authorization"));
                             corsConfiguration.setAllowCredentials(true);
                             return corsConfiguration;
                         }))
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/api/v1/auth/*").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterAfter(csrfCookieFilter, BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtSecurityFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

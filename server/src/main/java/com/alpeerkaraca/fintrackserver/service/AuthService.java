@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
     private static final String DEFAULT_USER_ROLE = "ROLE_USER";
-    private static final String DUMMY_PASSWORD_HASH = "$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP";
+    private static final String DUMMY_PASSWORD_HASH = "{bcrypt}$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP";
 
     private final UserProfileRepository userProfileRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -39,6 +39,7 @@ public class AuthService {
         }
 
         UserProfile newUser = UserProfile.builder()
+                .id(userProfileRepository.generateUuidv7())
                 .username(request.username())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))

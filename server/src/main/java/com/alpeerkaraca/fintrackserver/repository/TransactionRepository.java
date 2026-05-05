@@ -49,4 +49,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
             "AND t.transactionType = :transactionType ")
     List<Transaction> findByUserProfileIdAndPaymentMethodAndTransactionType(UUID userId, PaymentMethod paymentMethod, TransactionType transactionType);
     List<Transaction> findByUserProfileIdAndDateBetween(UUID userId, LocalDate startDate, LocalDate endDate);
+
+    @Query(value = "SELECT DISTINCT EXTRACT(YEAR FROM date) as year, EXTRACT(MONTH FROM date) as month FROM transactions WHERE user_profile_id = :userId", nativeQuery = true)
+    List<Object[]> findDistinctTransactionMonths(@org.springframework.data.repository.query.Param("userId") UUID userId);
+
+    @Query(value = "SELECT uuidv7()", nativeQuery = true)
+    UUID generateUuidv7();
 }

@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;import org.springframework.web.server.ResponseStatusException;
 
 import java.util.stream.Collectors;
 
@@ -206,6 +207,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage(), request.getRequestURI()));
+    }
+
+    /**
+     * Handle explicit response status exceptions (like rate limits throwing 429 Too Many Requests)
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+        log.warn("Response status exception for request to {}: {}", request.getRequestURI(), ex.getMessage());
+        return ResponseEntity
+                .status(ex.getStatusCode())
+                .body(ApiResponse.error(ex.getReason(), request.getRequestURI()));
     }
 
     /**
