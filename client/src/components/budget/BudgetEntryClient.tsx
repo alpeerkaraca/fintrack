@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Calendar,
   CreditCard,
   DollarSign,
   FileText,
+  Filter,
   Plus,
   Tag,
   Trash2,
   TrendingDown,
   TrendingUp,
   Wallet,
+  X,
 } from "lucide-react";
 
 import {
@@ -39,11 +42,15 @@ const getCurrentMonthKey = () => {
 };
 
 export default function BudgetEntryClient() {
+  const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedLimit, setSelectedLimit] = useState("15");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(
+    searchParams.get("category"),
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -53,10 +60,10 @@ export default function BudgetEntryClient() {
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [modal, setModal] = useState<
     | {
-        type: "success" | "error";
-        title: string;
-        message: string;
-      }
+      type: "success" | "error";
+      title: string;
+      message: string;
+    }
     | null
   >(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -98,9 +105,22 @@ export default function BudgetEntryClient() {
     window.setTimeout(() => setModal(null), 200);
   };
 
-  const monthlyTransactions = [...transactions].sort((a, b) =>
-    b.date.localeCompare(a.date),
-  );
+  const filteredTransactions = useMemo(() => {
+    const sorted = [...transactions].sort((a, b) =>
+      b.date.localeCompare(a.date),
+    );
+    if (!categoryFilter) {
+      return sorted;
+    }
+    return sorted.filter((t) => t.category === categoryFilter);
+  }, [transactions, categoryFilter]);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category) {
+      setCategoryFilter(category);
+    }
+  }, [searchParams]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -283,10 +303,10 @@ export default function BudgetEntryClient() {
       installmentMeta:
         isExpense && formData.isInstallment
           ? {
-              totalTry: amount,
-              months: installmentMonths,
-              startMonth: formData.date.slice(0, 7),
-            }
+            totalTry: amount,
+            months: installmentMonths,
+            startMonth: formData.date.slice(0, 7),
+          }
           : undefined,
     };
 
@@ -345,11 +365,11 @@ export default function BudgetEntryClient() {
     );
   };
 
-  const totalIncome = monthlyTransactions
+  const totalIncome = filteredTransactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
-  const totalExpenses = monthlyTransactions
+  const totalExpenses = filteredTransactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
@@ -422,7 +442,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalIncome)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {monthlyTransactions.filter((t) => t.type === "income").length}{" "}
+                  {filteredTransactions.filter((t) => t.type === "income").length}{" "}
                   transactions
                 </p>
               </div>
@@ -440,7 +460,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalExpenses)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {monthlyTransactions.filter((t) => t.type === "expense").length}{" "}
+                  {filteredTransactions.filter((t) => t.type === "expense").length}{" "}
                   transactions
                 </p>
               </div>
@@ -761,22 +781,24 @@ export default function BudgetEntryClient() {
             <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
               <p className="text-sm text-muted-foreground">Loading transactions...</p>
             </div>
-          ) : monthlyTransactions.length === 0 ? (
+          ) : filteredTransactions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
               <p className="text-sm text-muted-foreground">
-                No transactions found for this month
+                {categoryFilter
+                  ? `No transactions found for ${getCategoryLabel(categoryFilter)}`
+                  : "No transactions found for this month"}
               </p>
               <button
                 type="button"
-                onClick={() => setIsFormOpen(true)}
+                onClick={() => categoryFilter ? setCategoryFilter(null) : setIsFormOpen(true)}
                 className="mt-4 text-sm text-primary hover:underline"
               >
-                Add your first transaction
+                {categoryFilter ? "Clear filter" : "Add your first transaction"}
               </button>
             </div>
           ) : (
             <div className="space-y-3">
-              {monthlyTransactions.map((transaction) => (
+              {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
                   className={cn(

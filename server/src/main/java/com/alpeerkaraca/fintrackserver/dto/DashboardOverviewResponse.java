@@ -20,6 +20,7 @@ public class DashboardOverviewResponse {
     private List<ForecastResponse> forecast;
     private List<BudgetCategoryResponse> categoryWatchlist;
     private List<InvestmentAssetDto> investments;
+    private List<SavingsGoalDto> savingsGoals;
     private BigDecimal currentUsdTryRate;
     private PageDto<TransactionDto> recentTransactions;
 }
