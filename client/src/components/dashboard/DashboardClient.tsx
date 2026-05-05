@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Area,
   AreaChart,
@@ -479,17 +480,24 @@ export default function DashboardClient() {
                     ? Math.min((category.spentTry / category.limitTry) * 100, 100)
                     : 0;
                 return (
-                  <div key={category.category}>
+                  <Link
+                    key={category.category}
+                    href={`/budget?category=${category.category}`}
+                    className="block rounded-xl p-2 transition hover:bg-muted/40"
+                  >
                     <div className="flex items-center justify-between text-sm">
-                      <span>{getCategoryLabel(category.category)}</span>
+                      <span className="font-medium">
+                        {getCategoryLabel(category.category)}
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
+                        {formatCurrency(category.spentTry)} /{" "}
+                        {formatCurrency(category.limitTry)}
                       </span>
                     </div>
                     <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
                       <div
                         className={cn(
-                          "h-2 rounded-full",
+                          "h-2 rounded-full transition-all",
                           state === "danger"
                             ? "bg-rose-500"
                             : state === "warning"
@@ -499,7 +507,7 @@ export default function DashboardClient() {
                         style={{ width: `${ratio}%` }}
                       />
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -626,9 +634,10 @@ export default function DashboardClient() {
             </div>
             <div className="mt-5 space-y-4">
               {latestTransactions.map((transaction) => (
-                <div
+                <Link
                   key={transaction.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
+                  href={`/budget?category=${transaction.category}`}
+                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 transition hover:bg-muted/40"
                 >
                   <div>
                     <p className="text-sm font-semibold">{transaction.title}</p>
@@ -647,7 +656,7 @@ export default function DashboardClient() {
                     {transaction.type === "expense" ? "-" : "+"}
                     {formatCurrency(transaction.amountTry)}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
