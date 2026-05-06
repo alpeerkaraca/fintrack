@@ -15,6 +15,7 @@ public class TransactionFilter {
     private Integer year;
     private TransactionType type;
     private String category;
+    private String query;
     @Builder.Default
     private boolean expanded = true;
 }

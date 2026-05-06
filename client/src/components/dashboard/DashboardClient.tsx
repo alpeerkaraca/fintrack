@@ -237,7 +237,6 @@ export default function DashboardClient() {
     };
   }, []);
 
-  const forecast = dashboard?.forecast ?? [];
   const selectedMonthLabel =
     monthOptions.find((m) => m.value === selectedMonth)?.label ?? selectedMonth;
   const summary = dashboard?.summary;
@@ -255,11 +254,11 @@ export default function DashboardClient() {
 
   const netSavingsChart = useMemo(
     () =>
-      forecast.map((item) => ({
+      (dashboard?.forecast ?? []).map((item) => ({
         month: item.label,
         netSavings: Number((item.savings / 1000).toFixed(1)),
       })),
-    [forecast],
+    [dashboard?.forecast],
   );
 
   if (isLoading && !dashboard) {

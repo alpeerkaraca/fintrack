@@ -162,7 +162,7 @@ export default function ReportsClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const monthlySeries = report?.monthlySeries ?? [];
+  const monthlySeries = useMemo(() => report?.monthlySeries ?? [], [report?.monthlySeries]);
   const monthlyTrend = useMemo(
     () =>
       monthlySeries.map((item) => ({

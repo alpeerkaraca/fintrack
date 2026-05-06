@@ -153,6 +153,12 @@ export default function BudgetEntryClient() {
   };
 
   useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsFormOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     let isActive = true;
 
     const loadMonthOptions = async () => {
