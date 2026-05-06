@@ -7,8 +7,8 @@ import {
   Calendar,
   Download,
   PieChart as PieChartIcon,
-  TrendingDown,
-  TrendingUp,
+  ArrowDownRight,
+  ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -248,50 +248,55 @@ export default function ReportsClient() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="border-b border-border bg-card/60 px-6 py-6 lg:px-10">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
+      <div className="border-b-2 border-foreground bg-background px-6 py-6 lg:px-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="rounded-xl border border-border bg-background/60 p-2.5 transition hover:bg-muted/50"
+              className="border-2 border-foreground bg-background p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5 text-foreground" strokeWidth={3} />
             </Link>
             <div>
-              <p className="text-sm text-muted-foreground">Financial Analytics</p>
-              <h1 className="text-2xl font-semibold">Reports</h1>
+              <p className="font-mono text-xs font-bold uppercase tracking-tighter text-muted-foreground">
+                [ Financial Analytics ]
+              </p>
+              <h1 className="mt-1 text-3xl font-black uppercase tracking-tighter italic text-foreground">
+                Reports
+              </h1>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Date Range</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="border-2 border-foreground bg-background p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
+              <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Date Range</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground"
+                  className="border border-foreground bg-background px-2 py-1 font-mono text-[10px] font-bold uppercase focus:outline-none text-foreground"
                 />
-                <span className="text-muted-foreground">to</span>
+                <span className="font-mono text-[10px] font-black uppercase text-muted-foreground/30">to</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground"
+                  className="border border-foreground bg-background px-2 py-1 font-mono text-[10px] font-bold uppercase focus:outline-none text-foreground"
                 />
                 <button
                   type="button"
                   onClick={loadReport}
-                  className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
+                  className="bg-foreground px-4 py-1 font-mono text-[10px] font-black uppercase text-background transition-all hover:bg-foreground/80"
                 >
                   Run
                 </button>
               </div>
             </div>
-            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Report View</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+            
+            <div className="border-2 border-foreground bg-background p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
+              <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Report View</p>
+              <div className="mt-2 flex flex-wrap gap-1">
                 {[
                   { value: "overview", label: "Overview" },
                   { value: "category", label: "Category" },
@@ -302,13 +307,13 @@ export default function ReportsClient() {
                     type="button"
                     onClick={() => setSelectedView(option.value as typeof selectedView)}
                     className={cn(
-                      "rounded-lg px-3 py-1 text-xs transition",
+                      "rounded-none border border-foreground px-2 py-1 font-mono text-[10px] font-bold transition-all",
                       option.value === selectedView
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/70 text-muted-foreground hover:text-foreground",
+                        ? "bg-foreground text-background"
+                        : "bg-background text-foreground hover:bg-muted/50",
                     )}
                   >
-                    {option.label}
+                    {option.label.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -318,102 +323,92 @@ export default function ReportsClient() {
               type="button"
               onClick={handleExport}
               disabled={!report}
-              className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              className="flex items-center gap-2 border-2 border-foreground bg-foreground px-6 py-4 font-mono text-xs font-black uppercase text-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none disabled:opacity-50"
             >
-              <Download className="h-4 w-4" />
-              Export Data
+              <Download className="h-4 w-4" strokeWidth={3} />
+              Export .JSON
             </button>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
         {loadError && (
-          <p className="mb-4 text-sm text-rose-400">{loadError}</p>
+          <p className="mb-8 font-mono text-sm font-black uppercase italic text-[#ff0000] underline">
+            [ ERROR: {loadError.toUpperCase()} ]
+          </p>
         )}
-        {isLoading && (
-          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
-            <p className="text-sm text-muted-foreground">Loading report...</p>
-          </div>
-        )}
-        {!isLoading && !report && !loadError && (
-          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              Select a date range and run the report.
-            </p>
-          </div>
-        )}
-        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        
+        <div className="mb-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Total Income</p>
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Total Income</p>
             <div className="mt-4">
-              <p className="text-2xl font-semibold">{formatCurrency(totalIncome)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Avg: {formatCurrency(avgMonthlyIncome)}/month
+              <p className="font-mono text-3xl font-black tracking-tighter text-foreground">{formatCurrency(totalIncome)}</p>
+              <p className="mt-2 font-mono text-[10px] font-bold uppercase text-muted-foreground underline decoration-foreground/20">
+                AVG: {formatCurrency(avgMonthlyIncome)} / MO
               </p>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.1 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Total Expenses</p>
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Total Expenses</p>
             <div className="mt-4">
-              <p className="text-2xl font-semibold">{formatCurrency(totalExpenses)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Avg: {formatCurrency(avgMonthlyExpenses)}/month
+              <p className="font-mono text-3xl font-black tracking-tighter text-foreground">{formatCurrency(totalExpenses)}</p>
+              <p className="mt-2 font-mono text-[10px] font-bold uppercase text-muted-foreground underline decoration-foreground/20">
+                AVG: {formatCurrency(avgMonthlyExpenses)} / MO
               </p>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.2 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Total Savings</p>
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Total Savings</p>
             <div className="mt-4">
               <p
                 className={cn(
-                  "text-2xl font-semibold",
-                  totalSavings >= 0 ? "text-emerald-400" : "text-rose-400",
+                  "font-mono text-3xl font-black tracking-tighter",
+                  totalSavings >= 0 ? "text-[#00ff00]" : "text-[#ff0000]",
                 )}
               >
                 {formatCurrency(totalSavings)}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Avg: {formatCurrency(avgMonthlySavings)}/month
+              <p className="mt-2 font-mono text-[10px] font-bold uppercase text-muted-foreground underline decoration-foreground/20">
+                AVG: {formatCurrency(avgMonthlySavings)} / MO
               </p>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.3 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Savings Rate</p>
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Savings Rate</p>
             <div className="mt-4">
               <p
                 className={cn(
-                  "text-2xl font-semibold",
-                  savingsRate >= 20 ? "text-emerald-400" : "text-amber-400",
+                  "font-mono text-3xl font-black tracking-tighter",
+                  savingsRate >= 20 ? "text-[#00ff00]" : "text-[#ffff00]",
                 )}
               >
                 {formatNumber(savingsRate)}%
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {savingsRate >= 20 ? "Healthy rate" : "Room to improve"}
+              <p className="mt-2 font-mono text-[10px] font-bold uppercase text-muted-foreground underline decoration-foreground/20 italic">
+                {savingsRate >= 20 ? "Target Reached" : "Efficiency Gap"}
               </p>
             </div>
           </motion.div>
@@ -423,64 +418,91 @@ export default function ReportsClient() {
           {selectedView === "overview" && (
             <motion.div
               key="overview"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-10"
             >
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-                className="mb-6 rounded-2xl border border-border bg-card/70 p-6"
+                className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between border-b-2 border-foreground pb-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Trend Analysis
+                    <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Trend Analysis [ Linear ]
                     </p>
-                    <h2 className="text-lg font-semibold">Income vs Expenses</h2>
+                    <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Income vs Expenses vs Savings</h2>
                   </div>
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <Calendar className="h-6 w-6 text-foreground" strokeWidth={3} />
                 </div>
-                <div className="h-80">
+                <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyTrend} margin={{ left: 0, right: 12 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                    <LineChart data={monthlyTrend} margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="0" stroke="var(--muted)" vertical={false} />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="var(--foreground)" 
+                        fontFamily="monospace" 
+                        fontSize={10} 
+                        fontWeight="bold"
+                        tickLine={false}
+                        axisLine={{ strokeWidth: 2 }}
+                      />
                       <YAxis
-                        stroke="var(--muted-foreground)"
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        stroke="var(--foreground)"
+                        fontFamily="monospace"
+                        fontSize={10}
+                        fontWeight="bold"
+                        tickLine={false}
+                        axisLine={{ strokeWidth: 2 }}
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: "var(--card)",
-                          borderRadius: 12,
-                          borderColor: "var(--border)",
-                          color: "var(--foreground)",
+                          background: "var(--background)",
+                          border: "2px solid var(--foreground)",
+                          borderRadius: "0px",
+                          fontFamily: "monospace",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
                         }}
                         formatter={(value) => formatCurrency(Number(value))}
                       />
-                      <Legend />
+                      <Legend 
+                        wrapperStyle={{ 
+                          fontFamily: "monospace", 
+                          fontSize: "10px", 
+                          fontWeight: "black",
+                          textTransform: "uppercase",
+                          paddingTop: "20px"
+                        }} 
+                      />
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="income"
-                        stroke="#10b981"
-                        strokeWidth={2}
+                        stroke="#00ff00"
+                        strokeWidth={4}
+                        dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }}
+                        activeDot={{ r: 6, strokeWidth: 2 }}
                         name="Income"
                       />
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="expenses"
-                        stroke="#ef4444"
-                        strokeWidth={2}
+                        stroke="#ff0000"
+                        strokeWidth={4}
+                        dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }}
+                        activeDot={{ r: 6, strokeWidth: 2 }}
                         name="Expenses"
                       />
                       <Line
-                        type="monotone"
+                        type="linear"
                         dataKey="savings"
-                        stroke="#06b6d4"
-                        strokeWidth={2}
+                        stroke="#00ffff"
+                        strokeWidth={4}
+                        dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }}
+                        activeDot={{ r: 6, strokeWidth: 2 }}
                         name="Savings"
                       />
                     </LineChart>
@@ -488,105 +510,105 @@ export default function ReportsClient() {
                 </div>
               </motion.div>
 
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-10 lg:grid-cols-2">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                  className="rounded-2xl border border-border bg-card/70 p-6"
+                  className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
                 >
-                  <div className="mb-5">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Monthly Comparison
+                  <div className="mb-8 border-b-2 border-foreground pb-4">
+                    <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Distribution [ Bar ]
                     </p>
-                    <h2 className="text-lg font-semibold">Income & Expenses Bar Chart</h2>
+                    <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Monthly Flow</h2>
                   </div>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={monthlyTrend} margin={{ left: 0, right: 12 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                      <BarChart data={monthlyTrend}>
+                        <CartesianGrid strokeDasharray="0" stroke="var(--muted)" vertical={false} />
+                        <XAxis 
+                          dataKey="month" 
+                          stroke="var(--foreground)" 
+                          fontFamily="monospace" 
+                          fontSize={10} 
+                          fontWeight="bold"
+                          tickLine={false}
+                          axisLine={{ strokeWidth: 2 }}
+                        />
                         <YAxis
-                          stroke="var(--muted-foreground)"
-                          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                          stroke="var(--foreground)"
+                          fontFamily="monospace"
+                          fontSize={10}
+                          fontWeight="bold"
+                          tickLine={false}
+                          axisLine={{ strokeWidth: 2 }}
+                          tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                         />
                         <Tooltip
                           contentStyle={{
-                            background: "var(--card)",
-                            borderRadius: 12,
-                            borderColor: "var(--border)",
-                            color: "var(--foreground)",
+                            background: "var(--background)",
+                            border: "2px solid var(--foreground)",
+                            borderRadius: "0px",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
                           }}
                           formatter={(value) => formatCurrency(Number(value))}
                         />
-                        <Legend />
-                        <Bar dataKey="income" fill="#10b981" name="Income" />
-                        <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
+                        <Bar dataKey="income" fill="#00ff00" stroke="var(--foreground)" strokeWidth={2} name="Income" />
+                        <Bar dataKey="expenses" fill="#ff0000" stroke="var(--foreground)" strokeWidth={2} name="Expenses" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </motion.div>
 
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 }}
-                  className="rounded-2xl border border-border bg-card/70 p-6"
+                  className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
                 >
-                  <div className="mb-5">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Key Insights
+                  <div className="mb-8 border-b-2 border-foreground pb-4">
+                    <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Performance [ Insights ]
                     </p>
-                    <h2 className="text-lg font-semibold">Financial Highlights</h2>
+                    <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Key Highlights</h2>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {[
                       {
-                        title: "Best Savings Month",
-                        value: `${bestSavings?.label ?? "-"} with ${formatCurrency(bestSavings?.netSavingsTry ?? 0)}`,
-                        icon: TrendingUp,
-                        color: "text-emerald-400",
-                        bg: "bg-emerald-500/10",
+                        title: "Best Savings",
+                        value: `${bestSavings?.label ?? "-"} // ${formatCurrency(bestSavings?.netSavingsTry ?? 0)}`,
+                        icon: ArrowUpRight,
+                        bg: "bg-[#00ff00]",
                       },
                       {
-                        title: "Highest Expense Month",
-                        value: `${worstExpense?.label ?? "-"} with ${formatCurrency(worstExpense?.expenseTry ?? 0)}`,
-                        icon: TrendingDown,
-                        color: "text-rose-400",
-                        bg: "bg-rose-500/10",
+                        title: "Max Expense",
+                        value: `${worstExpense?.label ?? "-"} // ${formatCurrency(worstExpense?.expenseTry ?? 0)}`,
+                        icon: ArrowDownRight,
+                        bg: "bg-[#ff0000]",
                       },
                       {
-                        title: "Top Spending Category",
-                        value: `${report?.topCategory?.categoryLabel ?? "-"} - ${formatCurrency(report?.topCategory?.totalTry ?? 0)}`,
+                        title: "Top Sector",
+                        value: `${report?.topCategory?.categoryLabel.toUpperCase() ?? "-"} // ${formatCurrency(report?.topCategory?.totalTry ?? 0)}`,
                         icon: PieChartIcon,
-                        color: "text-primary",
-                        bg: "bg-primary/10",
+                        bg: "bg-[#00ffff]",
                       },
                       {
-                        title: "Reporting Period",
-                        value: `${reportingLabel || "-"} (${monthlySeries.length} months)`,
+                        title: "Duration",
+                        value: `${monthlySeries.length} MONTHS ANALYZED`,
                         icon: Calendar,
-                        color: "text-sky-400",
-                        bg: "bg-sky-500/10",
+                        bg: "bg-[#ffff00]",
                       },
-                    ].map((insight, index) => (
-                      <motion.div
+                    ].map((insight) => (
+                      <div
                         key={insight.title}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.7 + index * 0.1, duration: 0.3 }}
-                        className="rounded-xl border border-border bg-background/60 p-4"
+                        className="border-2 border-foreground bg-background p-4 flex items-center gap-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={cn("rounded-full p-2.5", insight.bg, insight.color)}>
-                            <insight.icon className="h-4 w-4" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold">{insight.title}</p>
-                            <p className="text-xs text-muted-foreground">{insight.value}</p>
-                          </div>
+                        <div className={cn("border-2 border-foreground p-3 text-black", insight.bg)}>
+                          <insight.icon className="h-5 w-5" strokeWidth={3} />
                         </div>
-                      </motion.div>
+                        <div className="flex-1">
+                          <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">{insight.title}</p>
+                          <p className="font-mono text-xs font-black uppercase tracking-tight text-foreground">{insight.value}</p>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </motion.div>
@@ -597,34 +619,31 @@ export default function ReportsClient() {
           {selectedView === "category" && (
             <motion.div
               key="category"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="grid gap-6 lg:grid-cols-[1fr_1.3fr]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid gap-10 lg:grid-cols-[1fr_1.3fr]"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="rounded-2xl border border-border bg-card/70 p-6"
+              <div
+                className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Breakdown
+                <div className="mb-8 border-b-2 border-foreground pb-4">
+                  <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                    Composition [ Pie ]
                   </p>
-                  <h2 className="text-lg font-semibold">Expense by Category</h2>
+                  <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Sector Breakdown</h2>
                 </div>
                 <div className="flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={360}>
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={120}
-                        fill="#8884d8"
+                        outerRadius={140}
+                        stroke="var(--foreground)"
+                        strokeWidth={2}
                         dataKey="total"
                       >
                         {categoryData.map((entry, index) => (
@@ -633,193 +652,193 @@ export default function ReportsClient() {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          background: "var(--card)",
-                          borderRadius: 12,
-                          borderColor: "var(--border)",
-                          color: "var(--foreground)",
+                          background: "var(--background)",
+                          border: "2px solid var(--foreground)",
+                          borderRadius: "0px",
+                          fontFamily: "monospace",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
                         }}
                         formatter={(value) => formatCurrency(Number(value))}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="rounded-2xl border border-border bg-card/70 p-6"
+              <div
+                className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-8 flex items-center justify-between border-b-2 border-foreground pb-4">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Details
+                    <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Metrics [ Ledger ]
                     </p>
-                    <h2 className="text-lg font-semibold">Category Summary</h2>
+                    <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Category Summary</h2>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    Total: {formatCurrency(categoryData.reduce((sum, c) => sum + c.total, 0))}
+                  <span className="font-mono text-xs font-black uppercase underline decoration-2 text-foreground">
+                    SUM: {formatCurrency(categoryData.reduce((sum, c) => sum + c.total, 0))}
                   </span>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {categoryData.map((cat, index) => {
                     const percentage = totalExpenses > 0 ? (cat.total / totalExpenses) * 100 : 0;
                     return (
-                      <motion.div
+                      <div
                         key={cat.category}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
-                        className="rounded-xl border border-border bg-background/60 p-4"
+                        className="border-2 border-foreground bg-background p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
                             <div
-                              className="h-4 w-4 rounded"
+                              className="h-6 w-6 border-2 border-foreground"
                               style={{ backgroundColor: cat.color }}
                             />
                             <div>
-                              <p className="text-sm font-semibold">{cat.category}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatNumber(percentage)}% of total
+                              <p className="font-mono text-sm font-black uppercase tracking-tight text-foreground">{cat.category}</p>
+                              <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">
+                                {formatNumber(percentage)}% SHARE
                               </p>
                             </div>
                           </div>
-                          <p className="text-sm font-semibold">{formatCurrency(cat.total)}</p>
+                          <p className="font-mono text-lg font-black tracking-tighter text-foreground">{formatCurrency(cat.total)}</p>
                         </div>
-                        <div className="mt-3 h-2 w-full rounded-full bg-muted/60">
+                        <div className="h-4 w-full border-2 border-foreground bg-muted/30 overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${percentage}%` }}
-                            transition={{ duration: 0.8, delay: 0.5 + index * 0.05 }}
-                            className="h-2 rounded-full"
+                            transition={{ duration: 1, delay: 0.2 + index * 0.1 }}
+                            className="h-full"
                             style={{
                               backgroundColor: cat.color,
                             }}
                           />
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           )}
 
           {selectedView === "forecast" && (
             <motion.div
               key="forecast"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-10"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="mb-6 rounded-2xl border border-border bg-card/70 p-6"
+              <div
+                className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Projection
+                <div className="mb-8 border-b-2 border-foreground pb-4">
+                  <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                    Projection [ Delta ]
                   </p>
-                  <h2 className="text-lg font-semibold">Savings Forecast</h2>
+                  <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Savings Forecast</h2>
                 </div>
-                <div className="h-80">
+                <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyTrend} margin={{ left: 0, right: 12 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                    <BarChart data={monthlyTrend}>
+                      <CartesianGrid strokeDasharray="0" stroke="var(--muted)" vertical={false} />
+                      <XAxis 
+                        dataKey="month" 
+                        stroke="var(--foreground)" 
+                        fontFamily="monospace" 
+                        fontSize={10} 
+                        fontWeight="bold"
+                        tickLine={false}
+                        axisLine={{ strokeWidth: 2 }}
+                      />
                       <YAxis
-                        stroke="var(--muted-foreground)"
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        stroke="var(--foreground)"
+                        fontFamily="monospace"
+                        fontSize={10}
+                        fontWeight="bold"
+                        tickLine={false}
+                        axisLine={{ strokeWidth: 2 }}
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: "var(--card)",
-                          borderRadius: 12,
-                          borderColor: "var(--border)",
-                          color: "var(--foreground)",
+                          background: "var(--background)",
+                          border: "2px solid var(--foreground)",
+                          borderRadius: "0px",
+                          fontFamily: "monospace",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
                         }}
                         formatter={(value) => formatCurrency(Number(value))}
                       />
-                      <Legend />
-                      <Bar dataKey="savings" fill="#06b6d4" name="Net Savings" />
+                      <Bar dataKey="savings" fill="#00ffff" stroke="var(--foreground)" strokeWidth={2} name="Net Savings" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="rounded-2xl border border-border bg-card/70 p-6"
+              <div
+                className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Analysis
+                <div className="mb-8 border-b-2 border-foreground pb-4">
+                  <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                    Analysis [ Matrix ]
                   </p>
-                  <h2 className="text-lg font-semibold">Nisan Freedom Outlook</h2>
+                  <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Freedom Outlook</h2>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                   {[
                     {
-                      title: "Best Savings Month",
+                      title: "MAX SAVINGS",
                       value: formatCurrency(bestSavings?.netSavingsTry ?? 0),
-                      sub: bestSavings?.label ?? "No data",
-                      color: "text-emerald-400",
+                      sub: bestSavings?.label.toUpperCase() ?? "N/A",
+                      color: "text-[#00ff00]",
                     },
                     {
-                      title: "Highest Expense Month",
+                      title: "MAX EXPENSE",
                       value: formatCurrency(worstExpense?.expenseTry ?? 0),
-                      sub: worstExpense?.label ?? "No data",
-                      color: "text-rose-400",
+                      sub: worstExpense?.label.toUpperCase() ?? "N/A",
+                      color: "text-[#ff0000]",
                     },
                     {
-                      title: "Total Savings",
+                      title: "ACCUMULATED",
                       value: formatCurrency(totalSavings),
-                      sub: "Net savings across the selected range",
-                      color: "text-primary",
+                      sub: "TOTAL PERIOD SAVINGS",
+                      color: "text-foreground",
                     },
                     {
-                      title: "Savings Rate",
+                      title: "PERIOD RATIO",
                       value: `${formatNumber(savingsRate)}%`,
-                      sub: "Overall savings rate for the range",
-                      color: "text-sky-400",
+                      sub: "GLOBAL EFFICIENCY",
+                      color: "text-[#00ffff]",
                     },
-                  ].map((item, index) => (
-                    <motion.div
+                  ].map((item) => (
+                    <div
                       key={item.title}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
-                      className="rounded-xl border border-border bg-background/60 p-5"
+                      className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
                     >
-                      <p className="text-sm font-semibold">{item.title}</p>
-                      <p className={cn("mt-2 text-2xl font-bold", item.color)}>
+                      <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">{item.title}</p>
+                      <p className={cn("mt-4 font-mono text-3xl font-black tracking-tighter", item.color)}>
                         {item.value}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">{item.sub}</p>
-                    </motion.div>
+                      <p className="mt-2 font-mono text-[10px] font-bold uppercase text-muted-foreground italic">{item.sub}</p>
+                    </div>
                   ))}
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, duration: 0.4 }}
-                  className="mt-6 rounded-xl bg-primary/10 p-4"
+                <div
+                  className="mt-10 border-4 border-foreground bg-[#ffff00] p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
                 >
-                  <p className="text-sm font-semibold text-primary">💡 Forecast Insight</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Keep your savings rate above 20% to strengthen long-term financial
-                    resilience. Review top categories to identify possible reductions.
+                  <p className="font-mono text-sm font-black uppercase italic text-black">{"// Forecast Insight"}</p>
+                  <p className="mt-4 font-mono text-sm font-bold uppercase leading-relaxed text-black">
+                    Financial Protocol: Maintain savings rate {">"}20% to achieve systemic resilience. 
+                    Targeting inefficiency in top categories is mandatory for portfolio expansion.
                   </p>
-                </motion.div>
-              </motion.div>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
