@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import {
   Calendar,
@@ -14,7 +15,6 @@ import {
   TrendingDown,
   TrendingUp,
   Wallet,
-  X,
 } from "lucide-react";
 
 import {
@@ -48,9 +48,6 @@ export default function BudgetEntryClient() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedLimit, setSelectedLimit] = useState("15");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(
-    searchParams.get("category"),
-  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -58,12 +55,13 @@ export default function BudgetEntryClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryMeta[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(searchParams.get("category"));
   const [modal, setModal] = useState<
     | {
-      type: "success" | "error";
-      title: string;
-      message: string;
-    }
+        type: "success" | "error";
+        title: string;
+        message: string;
+      }
     | null
   >(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -105,22 +103,14 @@ export default function BudgetEntryClient() {
     window.setTimeout(() => setModal(null), 200);
   };
 
-  const filteredTransactions = useMemo(() => {
-    const sorted = [...transactions].sort((a, b) =>
-      b.date.localeCompare(a.date),
-    );
-    if (!categoryFilter) {
-      return sorted;
-    }
-    return sorted.filter((t) => t.category === categoryFilter);
-  }, [transactions, categoryFilter]);
+  const monthlyTransactions = [...transactions].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
 
-  useEffect(() => {
-    const category = searchParams.get("category");
-    if (category) {
-      setCategoryFilter(category);
-    }
-  }, [searchParams]);
+  const filteredTransactions = useMemo(() => {
+    if (!categoryFilter) return monthlyTransactions;
+    return monthlyTransactions.filter((t) => t.category === categoryFilter);
+  }, [monthlyTransactions, categoryFilter]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -303,10 +293,10 @@ export default function BudgetEntryClient() {
       installmentMeta:
         isExpense && formData.isInstallment
           ? {
-            totalTry: amount,
-            months: installmentMonths,
-            startMonth: formData.date.slice(0, 7),
-          }
+              totalTry: amount,
+              months: installmentMonths,
+              startMonth: formData.date.slice(0, 7),
+            }
           : undefined,
     };
 
@@ -356,20 +346,11 @@ export default function BudgetEntryClient() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    const transaction = transactions.find((item) => item.id === id);
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-    openModal(
-      "success",
-      `${transaction?.title ?? "Transaction"} removed.`,
-    );
-  };
-
-  const totalIncome = filteredTransactions
+  const totalIncome = monthlyTransactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
-  const totalExpenses = filteredTransactions
+  const totalExpenses = monthlyTransactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amountTry, 0);
 
@@ -434,7 +415,12 @@ export default function BudgetEntryClient() {
 
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
         <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Total Income</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -442,7 +428,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalIncome)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {filteredTransactions.filter((t) => t.type === "income").length}{" "}
+                  {monthlyTransactions.filter((t) => t.type === "income").length}{" "}
                   transactions
                 </p>
               </div>
@@ -450,9 +436,14 @@ export default function BudgetEntryClient() {
                 <TrendingUp className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Total Expenses</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -460,7 +451,7 @@ export default function BudgetEntryClient() {
                   {formatCurrency(totalExpenses)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {filteredTransactions.filter((t) => t.type === "expense").length}{" "}
+                  {monthlyTransactions.filter((t) => t.type === "expense").length}{" "}
                   transactions
                 </p>
               </div>
@@ -468,9 +459,14 @@ export default function BudgetEntryClient() {
                 <TrendingDown className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Net Balance</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -483,12 +479,20 @@ export default function BudgetEntryClient() {
                 <Wallet className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {isFormOpen && (
-          <div className="mb-6 rounded-2xl border border-border bg-card/70 p-6">
-            <h2 className="mb-5 text-lg font-semibold">New Transaction</h2>
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+              animate={{ height: "auto", opacity: 1, marginBottom: 24 }}
+              exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-2xl border border-border bg-card/70 p-6">
+                <h2 className="mb-5 text-lg font-semibold">New Transaction</h2>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid gap-5 md:grid-cols-2">
                 <div>
@@ -733,7 +737,9 @@ export default function BudgetEntryClient() {
               </div>
             </form>
           </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="rounded-2xl border border-border bg-card/70 p-6">
           <div className="mb-5 flex items-center justify-between">
@@ -747,13 +753,27 @@ export default function BudgetEntryClient() {
                 onChange={handleSelectAll}
                 className="h-4 w-4 rounded border-border"
               />
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Transactions
-                </p>
-                <h2 className="text-lg font-semibold">
-                  {monthOptions.find((m) => m.value === selectedMonth)?.label}
-                </h2>
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Transactions
+                  </p>
+                  <h2 className="text-lg font-semibold">
+                    {monthOptions.find((m) => m.value === selectedMonth)?.label}
+                  </h2>
+                </div>
+                {categoryFilter && (
+                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                    <Filter className="h-3 w-3" />
+                    <span>{getCategoryLabel(categoryFilter)}</span>
+                    <button
+                      onClick={() => setCategoryFilter(null)}
+                      className="ml-1 hover:text-primary/70"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -777,100 +797,126 @@ export default function BudgetEntryClient() {
             <p className="mb-4 text-sm text-rose-400">{loadError}</p>
           )}
 
-          {isLoading ? (
-            <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
-              <p className="text-sm text-muted-foreground">Loading transactions...</p>
-            </div>
-          ) : filteredTransactions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
-              <p className="text-sm text-muted-foreground">
-                {categoryFilter
-                  ? `No transactions found for ${getCategoryLabel(categoryFilter)}`
-                  : "No transactions found for this month"}
-              </p>
-              <button
-                type="button"
-                onClick={() => categoryFilter ? setCategoryFilter(null) : setIsFormOpen(true)}
-                className="mt-4 text-sm text-primary hover:underline"
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center"
               >
-                {categoryFilter ? "Clear filter" : "Add your first transaction"}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className={cn(
-                    "flex items-center justify-between rounded-xl border border-border bg-background/60 px-5 py-4 transition",
-                    selectedIds.has(transaction.id)
-                      ? "border-primary/40 bg-primary/5"
-                      : "hover:bg-muted/30",
-                  )}
+                <p className="text-sm text-muted-foreground">Loading transactions...</p>
+              </motion.div>
+            ) : filteredTransactions.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center"
+              >
+                <p className="text-sm text-muted-foreground">
+                  {categoryFilter
+                    ? `No transactions found for ${getCategoryLabel(categoryFilter)}`
+                    : "No transactions found for this month"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => categoryFilter ? setCategoryFilter(null) : setIsFormOpen(true)}
+                  className="mt-4 text-sm text-primary hover:underline"
                 >
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(transaction.id)}
-                      onChange={() => handleToggleSelect(transaction.id)}
-                      className="h-4 w-4 rounded border-border"
-                    />
-                    <div
-                      className={cn(
-                        "rounded-full p-2.5",
-                        transaction.type === "expense"
-                          ? "bg-rose-500/10 text-rose-400"
-                          : "bg-emerald-500/10 text-emerald-400",
-                      )}
-                    >
-                      {transaction.type === "expense" ? (
-                        <TrendingDown className="h-4 w-4" />
-                      ) : (
-                        <TrendingUp className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{transaction.title}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span className="rounded bg-muted/60 px-2 py-0.5">
-                          {getCategoryLabel(transaction.category)}
-                        </span>
-                        <span>{transaction.date}</span>
-                        {transaction.paymentMethod && (
-                          <span className="rounded bg-muted/60 px-2 py-0.5 capitalize">
-                            {transaction.paymentMethod}
-                          </span>
+                  {categoryFilter ? "Clear filter" : "Add your first transaction"}
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="list"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                {filteredTransactions.map((transaction, index) => (
+                  <motion.div
+                    key={transaction.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl border border-border bg-background/60 px-5 py-4 transition",
+                      selectedIds.has(transaction.id)
+                        ? "border-primary/40 bg-primary/5"
+                        : "hover:bg-muted/30",
+                    )}
+                  >
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(transaction.id)}
+                        onChange={() => handleToggleSelect(transaction.id)}
+                        className="h-4 w-4 rounded border-border"
+                      />
+                      <div
+                        className={cn(
+                          "rounded-full p-2.5",
+                          transaction.type === "expense"
+                            ? "bg-rose-500/10 text-rose-400"
+                            : "bg-emerald-500/10 text-emerald-400",
+                        )}
+                      >
+                        {transaction.type === "expense" ? (
+                          <TrendingDown className="h-4 w-4" />
+                        ) : (
+                          <TrendingUp className="h-4 w-4" />
                         )}
                       </div>
+                      <div>
+                        <p className="font-semibold">{transaction.title}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span className="rounded bg-muted/60 px-2 py-0.5">
+                            {getCategoryLabel(transaction.category)}
+                          </span>
+                          <span>{transaction.date}</span>
+                          {transaction.paymentMethod && (
+                            <span className="rounded bg-muted/60 px-2 py-0.5 capitalize">
+                              {transaction.paymentMethod}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <p
-                      className={cn(
-                        "text-lg font-semibold",
-                        transaction.type === "expense"
-                          ? "text-rose-400"
-                          : "text-emerald-400",
-                      )}
-                    >
-                      {transaction.type === "expense" ? "-" : "+"}
-                      {formatCurrency(transaction.amountTry)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedIds(new Set([transaction.id]));
-                        handleBulkDelete();
-                      }}
-                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                    <div className="flex items-center gap-4">
+                      <p
+                        className={cn(
+                          "text-lg font-semibold",
+                          transaction.type === "expense"
+                            ? "text-rose-400"
+                            : "text-emerald-400",
+                        )}
+                      >
+                        {transaction.type === "expense" ? "-" : "+"}
+                        {formatCurrency(transaction.amountTry)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedIds(new Set([transaction.id]));
+                          handleBulkDelete();
+                        }}
+                        className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
         {modal && (
           <FeedbackModal

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 
 import { isValidEmail, isValidPassword, register } from "@/lib/auth";
 
@@ -76,7 +77,12 @@ export default function RegisterClient() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
-      <div className="w-full rounded-2xl border border-border bg-card/70 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full rounded-2xl border border-border bg-card/70 p-6"
+      >
         <h1 className="text-2xl font-semibold">Create account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Use username, email, password and your net salary in USD.
@@ -175,7 +181,7 @@ export default function RegisterClient() {
             Sign in
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

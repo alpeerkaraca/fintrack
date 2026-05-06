@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
   Area,
@@ -13,6 +14,7 @@ import {
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Calendar,
   Coins,
   CreditCard,
   DollarSign,
@@ -122,15 +124,6 @@ const getLimitState = (category: CategoryWatchlistItem) => {
 
 const formatAssetName = (name: string) =>
   name.length > 30 ? `${name.slice(0, 30).trim()}...` : name;
-const getCurrencyIcon = (currency?: string) => {
-  if (currency === "USD") {
-    return DollarSign;
-  }
-  if (currency === "TRY") {
-    return TurkishLira;
-  }
-  return Coins;
-};
 
 export default function DashboardClient() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
@@ -159,7 +152,6 @@ export default function DashboardClient() {
           setMonthOptions(payload ?? []);
         }
       } catch {
-        // Fallback to current month if fetch fails
         if (isActive) {
           setMonthOptions([{ value: getCurrentMonthKey(), label: "Current Month" }]);
         }
@@ -249,8 +241,6 @@ export default function DashboardClient() {
   const selectedMonthLabel =
     monthOptions.find((m) => m.value === selectedMonth)?.label ?? selectedMonth;
   const summary = dashboard?.summary;
-  const currentUsdRate =
-    dashboard?.currentUsdTryRate ?? dashboard?.summary.usdRate ?? 0;
   const recentTransactions = dashboard?.recentTransactions?.content ?? [];
 
   const latestTransactions = recentTransactions.slice(0, 6);
@@ -320,7 +310,12 @@ export default function DashboardClient() {
 
       <section className="px-6 py-6 lg:px-10">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Monthly Income</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -333,8 +328,13 @@ export default function DashboardClient() {
                 <ArrowUpRight className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Monthly Expenses</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -347,8 +347,13 @@ export default function DashboardClient() {
                 <ArrowDownRight className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Net Savings</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -361,8 +366,13 @@ export default function DashboardClient() {
                 <Wallet className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Credit Card Limit</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -375,11 +385,16 @@ export default function DashboardClient() {
                 <CreditCard className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -419,8 +434,13 @@ export default function DashboardClient() {
                 </div>
               </div>
             )}
-          </div>
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -469,11 +489,70 @@ export default function DashboardClient() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.6 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Budget Limits
+                </p>
+                <h3 className="text-lg font-semibold">Category Watchlist</h3>
+              </div>
+              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
+            </div>
+            <div className="mt-5 grid gap-4">
+              {(dashboard?.categoryWatchlist ?? []).map((category, index) => {
+                const state = getLimitState(category);
+                const ratio =
+                  category.limitTry > 0
+                    ? Math.min((category.spentTry / category.limitTry) * 100, 100)
+                    : 0;
+                return (
+                  <motion.div
+                    key={category.category}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{getCategoryLabel(category.category)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
+                      <div
+                        className={cn(
+                          "h-2 rounded-full",
+                          state === "danger"
+                            ? "bg-rose-500"
+                            : state === "warning"
+                              ? "bg-amber-400"
+                              : "bg-emerald-500",
+                        )}
+                        style={{ width: `${ratio}%` }}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.7 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -484,42 +563,80 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">Latest snapshot</span>
             </div>
             <div className="mt-5 space-y-4">
-              {(dashboard?.investments ?? []).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center">
-                  <p className="text-xs text-muted-foreground">No active investments</p>
-                </div>
-              ) : (
-                (dashboard?.investments ?? []).map((asset) => (
-                  <div
-                    key={asset.symbol}
-                    className="rounded-xl border border-border bg-background/60 p-4"
+              <AnimatePresence mode="wait">
+                {(dashboard?.investments ?? []).length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold">{asset.symbol}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatAssetName(asset.name)}
-                        </p>
-                      </div>
-                      <div
-                        className={cn(
-                          "rounded-full px-3 py-1 text-xs",
-                          asset.changePercent >= 0
-                            ? "bg-emerald-500/10 text-emerald-300"
-                            : "bg-rose-500/10 text-rose-300",
-                        )}
+                    <p className="text-xs text-muted-foreground">No active investments</p>
+                  </motion.div>
+                ) : (
+                  <motion.div key="list" className="space-y-4">
+                    {(dashboard?.investments ?? []).map((asset, index) => (
+                      <motion.div
+                        key={asset.symbol}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 + index * 0.05, duration: 0.3 }}
+                        className="rounded-xl border border-border bg-background/60 p-4"
                       >
-                        {asset.changePercent >= 0 ? "+" : ""}
-                        {asset.changePercent.toFixed(2)}%
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{asset.symbol}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatAssetName(asset.name)}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
+                            </p>
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-full px-3 py-1 text-xs",
+                              asset.changePercent >= 0
+                                ? "bg-emerald-500/10 text-emerald-300"
+                                : "bg-rose-500/10 text-rose-300",
+                            )}
+                          >
+                            {asset.changePercent >= 0 ? "+" : ""}
+                            {asset.changePercent.toFixed(2)}%
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+                          <div>
+                            <p>Quantity</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {asset.quantity}
+                            </p>
+                          </div>
+                          <div>
+                            <p>Avg Cost</p>
+                            <div className="mt-1 space-y-1 text-foreground">
+                              <p className="flex items-center gap-1 text-sm font-semibold">
+                                <TurkishLira className="h-3.5 w-3.5" />
+                                {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.75 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -532,47 +649,69 @@ export default function DashboardClient() {
               </button>
             </div>
             <div className="mt-5 space-y-5">
-              {(dashboard?.savingsGoals ?? []).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center">
-                  <p className="text-xs text-muted-foreground">No active goals yet</p>
-                </div>
-              ) : (
-                (dashboard?.savingsGoals ?? []).map((goal) => (
-                  <div key={goal.id}>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{goal.title}</span>
-                        {goal.targetDate && (
-                          <span className="text-[10px] text-muted-foreground">
-                            Target: {goal.targetDate}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <span className="font-semibold">
-                          %{goal.progressPercent.toFixed(0)}
-                        </span>
-                        <p className="text-[10px] text-muted-foreground">
-                          {formatCurrency(goal.targetAmount - goal.currentAmount)}{" "}
-                          left
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
-                      <div
-                        className="h-2 rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
+              <AnimatePresence mode="wait">
+                {(dashboard?.savingsGoals ?? []).length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center"
+                  >
+                    <p className="text-xs text-muted-foreground">No active goals yet</p>
+                  </motion.div>
+                ) : (
+                  <motion.div key="list" className="space-y-5">
+                    {(dashboard?.savingsGoals ?? []).map((goal, index) => (
+                      <motion.div
+                        key={goal.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.85 + index * 0.05, duration: 0.3 }}
+                      >
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{goal.title}</span>
+                            {goal.targetDate && (
+                              <span className="text-[10px] text-muted-foreground">
+                                Target: {goal.targetDate}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold">
+                              %{goal.progressPercent.toFixed(0)}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground">
+                              {formatCurrency(goal.targetAmount - goal.currentAmount)}{" "}
+                              left
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
+                            transition={{ duration: 0.8, delay: 1.0 + index * 0.05 }}
+                            className="h-2 rounded-full bg-primary transition-all duration-500"
+                          />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.8 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -583,34 +722,61 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
             </div>
             <div className="mt-5 space-y-4">
-              {latestTransactions.map((transaction) => (
-                <Link
-                  key={transaction.id}
-                  href={`/budget?category=${transaction.category}`}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 transition hover:bg-muted/40"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{transaction.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {getCategoryLabel(transaction.category)} · {transaction.date}
-                    </p>
-                  </div>
-                  <p
-                    className={cn(
-                      "text-sm font-semibold",
-                      transaction.type === "expense"
-                        ? "text-rose-400"
-                        : "text-emerald-400",
-                    )}
+              <AnimatePresence mode="wait">
+                {latestTransactions.length === 0 ? (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center text-sm text-muted-foreground py-4"
                   >
-                    {transaction.type === "expense" ? "-" : "+"}
-                    {formatCurrency(transaction.amountTry)}
-                  </p>
-                </Link>
-              ))}
+                    No recent activity
+                  </motion.p>
+                ) : (
+                  <motion.div key="list" className="space-y-4">
+                    {latestTransactions.map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.9 + index * 0.05, duration: 0.3 }}
+                      >
+                        <Link
+                          href={`/budget?category=${transaction.category}`}
+                          className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 transition hover:bg-muted/40"
+                        >
+                          <div>
+                            <p className="text-sm font-semibold">{transaction.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getCategoryLabel(transaction.category)} · {transaction.date}
+                            </p>
+                          </div>
+                          <p
+                            className={cn(
+                              "text-sm font-semibold",
+                              transaction.type === "expense"
+                                ? "text-rose-400"
+                                : "text-emerald-400",
+                            )}
+                          >
+                            {transaction.type === "expense" ? "-" : "+"}
+                            {formatCurrency(transaction.amountTry)}
+                          </p>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.9 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -621,29 +787,48 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">Auto-distributed</span>
             </div>
             <div className="mt-5 space-y-4">
-              {installmentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="rounded-xl border border-border bg-background/60 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold">{transaction.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getCategoryLabel(transaction.category)} · {transaction.date}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-amber-400">
-                      {formatCurrency(transaction.amountTry)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <AnimatePresence mode="wait">
+                {installmentTransactions.length === 0 ? (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center text-sm text-muted-foreground py-4"
+                  >
+                    No active installments
+                  </motion.p>
+                ) : (
+                  <motion.div key="list" className="space-y-4">
+                    {installmentTransactions.map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.0 + index * 0.05, duration: 0.3 }}
+                        className="rounded-xl border border-border bg-background/60 px-4 py-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{transaction.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getCategoryLabel(transaction.category)} · {transaction.date}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-amber-400">
+                            {formatCurrency(transaction.amountTry)}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
               Installment costs are automatically distributed across active schedules.
             </p>
-          </div>
+          </motion.div>
         </div>
       </section>
     </>
