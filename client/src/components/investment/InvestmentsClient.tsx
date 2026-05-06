@@ -9,8 +9,8 @@ import {
   Lock,
   Plus,
   TurkishLira,
-  TrendingDown,
-  TrendingUp,
+  ArrowDownRight,
+  ArrowUpRight,
   Wallet,
   X,
 } from "lucide-react";
@@ -26,8 +26,8 @@ import {
   formatCurrency,
   formatCurrencyTrimZeros,
   formatNumber,
-  type InvestmentAsset,
 } from "@/lib/fintrack";
+import type { InvestmentAsset } from "@/lib/fintrack";
 import { authFetch } from "@/lib/auth";
 import { parseApiResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -383,166 +383,154 @@ export default function InvestmentsClient() {
   };
 
   return (
-    <>
-      <div className="border-b border-border bg-card/60 px-6 py-6 lg:px-10">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="border-b-2 border-foreground bg-background px-6 py-6 lg:px-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div>
-              <p className="text-sm text-muted-foreground">Portfolio Manager</p>
-              <h1 className="text-2xl font-semibold">Investments</h1>
-            </div>
+            <p className="font-mono text-xs font-bold uppercase tracking-tighter text-muted-foreground">
+              [ Portfolio Manager ]
+            </p>
+            <h1 className="mt-1 text-3xl font-black uppercase tracking-tighter italic text-foreground">
+              Investments
+            </h1>
           </div>
 
           <button
             type="button"
             onClick={() => handleOpenForm()}
-            className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+            className="flex items-center gap-2 border-2 border-foreground bg-foreground px-6 py-4 font-mono text-xs font-black uppercase text-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" strokeWidth={3} />
             Add Asset
           </button>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-10">
         {error && (
-          <p className="mb-4 text-sm text-rose-400">{error}</p>
+          <p className="mb-8 font-mono text-sm font-black uppercase italic text-[#ff0000] underline">
+            [ ERROR: {error.toUpperCase()} ]
+          </p>
         )}
-        {isLoading && (
-          <div className="mb-6 rounded-2xl border border-dashed border-border bg-background/60 py-10 text-center">
-            <p className="text-sm text-muted-foreground">Loading portfolio...</p>
-          </div>
-        )}
-        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+
+        <div className="mb-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Total Invested</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Total Invested</p>
+            <div className="mt-4 flex items-end justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="font-mono text-2xl font-black tracking-tighter text-foreground">
                   {formatCurrency(totalInvested)}
                 </p>
-                <p className="text-xs text-muted-foreground">Average cost basis</p>
+                <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Cost Basis</p>
               </div>
-              <div className="rounded-full bg-sky-500/10 p-3 text-sky-400">
-                <Wallet className="h-5 w-5" />
+              <div className="border-2 border-foreground bg-[#00ffff] p-2 text-black">
+                <Wallet className="h-6 w-6" strokeWidth={3} />
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.1 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Current Value</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Market Value</p>
+            <div className="mt-4 flex items-end justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="font-mono text-2xl font-black tracking-tighter text-foreground">
                   {formatCurrency(totalCurrentValue)}
                 </p>
-                <p className="text-xs text-muted-foreground">Market price</p>
+                <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Real-time Est.</p>
               </div>
-              <div className="rounded-full bg-primary/10 p-3 text-primary">
-                <TrendingUp className="h-5 w-5" />
+              <div className="border-2 border-foreground bg-[#00ff00] p-2 text-black">
+                <ArrowUpRight className="h-6 w-6" strokeWidth={3} />
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.2 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Total P/L</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Total P/L</p>
+            <div className="mt-4 flex items-end justify-between">
               <div>
                 <p
                   className={cn(
-                    "text-2xl font-semibold",
-                    totalProfitLoss >= 0 ? "text-emerald-400" : "text-rose-400",
+                    "font-mono text-2xl font-black tracking-tighter",
+                    totalProfitLoss >= 0 ? "text-[#00ff00]" : "text-[#ff0000]",
                   )}
                 >
                   {totalProfitLoss >= 0 ? "+" : ""}
                   {formatCurrency(totalProfitLoss)}
                 </p>
-                <p className="text-xs text-muted-foreground">Unrealized gain/loss</p>
+                <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Unrealized</p>
               </div>
               <div
                 className={cn(
-                  "rounded-full p-3",
-                  totalProfitLoss >= 0
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : "bg-rose-500/10 text-rose-400",
+                  "border-2 border-foreground p-2 text-black",
+                  totalProfitLoss >= 0 ? "bg-[#00ff00]" : "bg-[#ff0000]",
                 )}
               >
                 {totalProfitLoss >= 0 ? (
-                  <TrendingUp className="h-5 w-5" />
+                  <ArrowUpRight className="h-6 w-6" strokeWidth={3} />
                 ) : (
-                  <TrendingDown className="h-5 w-5" />
+                  <ArrowDownRight className="h-6 w-6" strokeWidth={3} />
                 )}
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            transition={{ delay: 0.3 }}
+            className="border-2 border-foreground bg-background p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Return</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Net Return</p>
+            <div className="mt-4 flex items-end justify-between">
               <div>
                 <p
                   className={cn(
-                    "text-2xl font-semibold",
-                    totalProfitLossPercent >= 0
-                      ? "text-emerald-400"
-                      : "text-rose-400",
+                    "font-mono text-2xl font-black tracking-tighter",
+                    totalProfitLossPercent >= 0 ? "text-[#00ff00]" : "text-[#ff0000]",
                   )}
                 >
                   {totalProfitLossPercent >= 0 ? "+" : ""}
                   {formatNumber(totalProfitLossPercent)}%
                 </p>
-                <p className="text-xs text-muted-foreground">Overall performance</p>
+                <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground">Yield</p>
               </div>
               <div
                 className={cn(
-                  "rounded-full p-3",
-                  totalProfitLossPercent >= 0
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : "bg-rose-500/10 text-rose-400",
+                  "border-2 border-foreground p-2 text-black",
+                  totalProfitLossPercent >= 0 ? "bg-[#00ff00]" : "bg-[#ff0000]",
                 )}
               >
-                {totalProfitLossPercent >= 0 ? (
-                  <TrendingUp className="h-5 w-5" />
-                ) : (
-                  <TrendingDown className="h-5 w-5" />
-                )}
+                <Coins className="h-6 w-6" strokeWidth={3} />
               </div>
             </div>
           </motion.div>
         </div>
 
-        <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_1.3fr]">
+        <div className="mb-10 grid gap-10 lg:grid-cols-[1fr_1.5fr]">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-            className="rounded-2xl border border-border bg-card/70 p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="border-2 border-foreground bg-background p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <div className="mb-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Portfolio
+            <div className="mb-8 border-b-2 border-foreground pb-4">
+              <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                Allocation [ Donut ]
               </p>
-              <h2 className="text-lg font-semibold">Asset Allocation</h2>
+              <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">Portfolio Weights</h2>
             </div>
             <div className="flex items-center justify-center">
               <ResponsiveContainer width="100%" height={280}>
@@ -551,9 +539,11 @@ export default function InvestmentsClient() {
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
+                    innerRadius={80}
                     outerRadius={110}
-                    paddingAngle={4}
+                    paddingAngle={0}
+                    stroke="var(--foreground)"
+                    strokeWidth={2}
                     dataKey="value"
                   >
                     {chartData.map((entry, index) => (
@@ -562,29 +552,32 @@ export default function InvestmentsClient() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: "var(--card)",
-                      borderRadius: 12,
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
+                      background: "var(--background)",
+                      border: "2px solid var(--foreground)",
+                      borderRadius: "0px",
+                      fontFamily: "monospace",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
                     }}
                     formatter={(value) => formatCurrency(Number(value))}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-8 grid grid-cols-2 gap-4">
               {chartData.map((item) => (
                 <div
                   key={item.name}
-                  className="flex items-center gap-2 rounded-lg bg-background/60 px-3 py-2"
+                  className="border-2 border-foreground bg-background p-3 flex items-center gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]"
                 >
                   <div
-                    className="h-3 w-3 rounded-full"
+                    className="h-4 w-4 border border-foreground"
                     style={{ backgroundColor: item.color }}
                   />
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-mono text-[10px] font-black uppercase truncate text-foreground">{item.name}</p>
+                    <p className="font-mono text-[10px] font-bold text-muted-foreground">
                       {formatCurrency(item.value)}
                     </p>
                   </div>
@@ -594,176 +587,134 @@ export default function InvestmentsClient() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-            className="rounded-2xl border border-border bg-card/70 p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="border-2 border-foreground bg-background shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <div className="mb-5 flex items-center justify-between">
+            <div className="border-b-2 border-foreground bg-foreground p-4 text-background flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Holdings
-                </p>
-                <h2 className="text-lg font-semibold">Mutual Funds</h2>
+                <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter">
+                  {"Trading Terminal // Active Holdings"}
+                </h2>
               </div>
-              <span className="text-xs text-muted-foreground">
-                Live simulation
+              <span className="font-mono text-[10px] font-black uppercase bg-[#ffff00] text-black px-2 py-0.5">
+                Live Simulation
               </span>
             </div>
 
-            <AnimatePresence mode="wait">
-              {assets.length === 0 ? (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center"
-                >
-                  <p className="text-sm text-muted-foreground">
-                    No assets in your portfolio
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenForm()}
-                    className="mt-4 text-sm text-primary hover:underline"
-                  >
-                    Add your first asset
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="list"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-4"
-                >
-                  {assets.map((asset, index) => (
-                    <motion.div
-                      key={asset.id ?? asset.symbol}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.3 }}
-                      className="rounded-xl border border-border bg-background/60 p-4 transition hover:bg-muted/30"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <p className="text-sm font-semibold">{asset.symbol}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatAssetName(asset.name)}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
-                              </p>
-                            </div>
-                            <div
-                              className={cn(
-                                "rounded-full px-3 py-1 text-xs",
-                                asset.changePercent >= 0
-                                  ? "bg-emerald-500/10 text-emerald-300"
-                                  : "bg-rose-500/10 text-rose-300",
-                              )}
-                            >
-                              {asset.changePercent >= 0 ? "+" : ""}
-                              {asset.changePercent.toFixed(2)}%
-                            </div>
-                          </div>
-
-                          <div className="mt-4 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
-                            <div>
-                              <p className="text-muted-foreground">Quantity</p>
-                              <p className="mt-1 font-semibold text-foreground">
-                                {formatNumber(asset.quantity)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Avg Cost</p>
-                              <div className="mt-1 space-y-1 text-foreground">
-                                <p className="flex items-center gap-1 text-sm font-semibold">
-                                  <TurkishLira className="h-3.5 w-3.5" />
-                                  {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                {assets.length === 0 ? (
+                  <div className="py-20 text-center">
+                    <p className="font-mono text-sm font-black uppercase italic text-muted-foreground">
+                      No positions detected in terminal
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {assets.map((asset, index) => (
+                      <motion.div
+                        key={asset.id ?? asset.symbol}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="border-2 border-foreground bg-background p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:bg-muted/20"
+                      >
+                        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-4">
+                              <div>
+                                <h3 className="font-mono text-lg font-black uppercase tracking-tight text-foreground">{asset.symbol}</h3>
+                                <p className="font-mono text-[10px] font-bold uppercase text-muted-foreground leading-none">
+                                  {formatAssetName(asset.name)}
                                 </p>
-                                {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    {(() => {
-                                      const Icon = getCurrencyIcon(asset.originalCurrency);
-                                      return <Icon className="h-3 w-3" />;
-                                    })()}
-                                    {formatCurrencyTrimZeros(
-                                      asset.avgCostOriginal ?? asset.avgCostTry,
-                                      asset.originalCurrency,
-                                      6,
-                                    )}
-                                  </p>
-                                )}
                               </div>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Current Price</p>
-                              <div className="mt-1 space-y-1 text-foreground">
-                                <p className="flex items-center gap-1 text-sm font-semibold">
-                                  <TurkishLira className="h-3.5 w-3.5" />
-                                  {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
-                                </p>
-                                {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    {(() => {
-                                      const Icon = getCurrencyIcon(asset.originalCurrency);
-                                      return <Icon className="h-3 w-3" />;
-                                    })()}
-                                    {formatCurrencyTrimZeros(
-                                      asset.currentPriceOriginal ?? asset.currentPriceTry,
-                                      asset.originalCurrency,
-                                      6,
-                                    )}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">P/L</p>
-                              <p
+                              <div
                                 className={cn(
-                                  "mt-1 font-semibold",
-                                  asset.profitLossTry >= 0
-                                    ? "text-emerald-400"
-                                    : "text-rose-400",
+                                  "border-2 border-foreground px-3 py-1 font-mono text-xs font-black uppercase",
+                                  asset.changePercent >= 0
+                                    ? "bg-[#00ff00] text-black"
+                                    : "bg-[#ff0000] text-black",
                                 )}
                               >
-                                {asset.profitLossTry >= 0 ? "+" : ""}
-                                {formatCurrency(asset.profitLossTry)}
-                              </p>
+                                {asset.changePercent >= 0 ? "+" : ""}
+                                {asset.changePercent.toFixed(2)}%
+                              </div>
+                            </div>
+
+                            <div className="mt-6 grid grid-cols-2 gap-6 md:grid-cols-4">
+                              <div>
+                                <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">Quantity</p>
+                                <p className="mt-1 font-mono text-sm font-black text-foreground">
+                                  {formatNumber(asset.quantity)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">Avg Cost</p>
+                                <div className="mt-1 font-mono text-sm font-black text-foreground">
+                                  <p>{formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}</p>
+                                  {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                    <p className="text-[10px] font-bold text-muted-foreground">
+                                      {formatCurrencyTrimZeros(
+                                        asset.avgCostOriginal ?? asset.avgCostTry,
+                                        asset.originalCurrency,
+                                        6,
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">Market Price</p>
+                                <div className="mt-1 font-mono text-sm font-black text-foreground">
+                                  <p>{formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}</p>
+                                  {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                    <p className="text-[10px] font-bold text-muted-foreground">
+                                      {formatCurrencyTrimZeros(
+                                        asset.currentPriceOriginal ?? asset.currentPriceTry,
+                                        asset.originalCurrency,
+                                        6,
+                                      )}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="font-mono text-[10px] font-black uppercase text-muted-foreground">Profit / Loss</p>
+                                <p
+                                  className={cn(
+                                    "mt-1 font-mono text-sm font-black",
+                                    asset.profitLossTry >= 0 ? "text-[#00ff00]" : "text-[#ff0000]",
+                                  )}
+                                >
+                                  {asset.profitLossTry >= 0 ? "+" : ""}
+                                  {formatCurrency(asset.profitLossTry)}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="ml-4 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenForm(asset)}
-                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRequest(asset)}
-                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleOpenForm(asset)}
+                              className="border-2 border-foreground p-2 transition-all hover:bg-foreground hover:text-background text-foreground"
+                            >
+                              <Edit2 className="h-4 w-4" strokeWidth={3} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRequest(asset)}
+                              className="border-2 border-foreground p-2 transition-all hover:bg-[#ff0000] text-foreground hover:text-black"
+                            >
+                              <X className="h-4 w-4" strokeWidth={3} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         </div>
 
@@ -773,36 +724,30 @@ export default function InvestmentsClient() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full max-w-md rounded-2xl border border-border bg-card p-6"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-md border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">
-                    {editingAsset ? "Edit Asset" : "Add New Asset"}
+                <div className="mb-8 flex items-center justify-between border-b-2 border-foreground pb-4">
+                  <h2 className="font-mono text-xl font-black uppercase italic tracking-tighter text-foreground">
+                    {editingAsset ? "// Edit Position" : "// Add Position"}
                   </h2>
                   <button
-                    type="button"
                     onClick={handleCloseForm}
-                    className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted/50"
+                    className="border-2 border-foreground p-1 hover:bg-foreground hover:text-background transition-all text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" strokeWidth={3} />
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="assetType"
-                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
-                    >
-                      Asset Type
-                      {isEditing && <Lock className="h-3.5 w-3.5" />}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <label htmlFor="assetType" className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Asset Category
                     </label>
                     <select
                       id="assetType"
@@ -816,25 +761,19 @@ export default function InvestmentsClient() {
                         }))
                       }
                       disabled={isEditing}
-                      className={cn(
-                        "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                        isEditing && "cursor-not-allowed opacity-60",
-                      )}
+                      className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold uppercase focus:outline-none disabled:opacity-50 text-foreground"
                     >
-                      <option value="FUND">Fund</option>
-                      <option value="STOCK">Stock</option>
-                      <option value="GOLD_SILVER">Gold & Silver</option>
-                      <option value="CURRENCY">Currency</option>
+                      <option value="FUND" className="bg-background">FUND</option>
+                      <option value="STOCK" className="bg-background">STOCK</option>
+                      <option value="GOLD_SILVER" className="bg-background">COMMODITY</option>
+                      <option value="CURRENCY" className="bg-background">FOREX</option>
                     </select>
                   </div>
 
                   {!isEditing && requiresMarket && (
-                    <div>
-                      <label
-                        htmlFor="stockMarket"
-                        className="mb-2 block text-xs text-muted-foreground"
-                      >
-                        Stock Market
+                    <div className="space-y-2">
+                      <label htmlFor="stockMarket" className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                        Exchange / Market
                       </label>
                       <select
                         id="stockMarket"
@@ -842,32 +781,22 @@ export default function InvestmentsClient() {
                         onChange={(e) =>
                           setFormData({ ...formData, stockMarket: e.target.value })
                         }
-                        disabled={availableMarkets.length === 0}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold uppercase focus:outline-none text-foreground"
                         required
                       >
-                        {availableMarkets.length === 0 && (
-                          <option value="">No markets available</option>
-                        )}
-                        {availableMarkets.length > 0 && (
-                          <option value="">Select market</option>
-                        )}
+                        <option value="" className="bg-background">SELECT EXCHANGE</option>
                         {availableMarkets.map((market) => (
-                          <option key={market.id} value={market.id}>
-                            {market.label} · {market.suffix}
+                          <option key={market.id} value={market.id} className="bg-background">
+                            {market.label.toUpperCase()} // {market.suffix}
                           </option>
                         ))}
                       </select>
                     </div>
                   )}
 
-                  <div>
-                    <label
-                      htmlFor="symbol"
-                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
-                    >
-                      Symbol
-                      {isEditing && <Lock className="h-3.5 w-3.5" />}
+                  <div className="space-y-2">
+                    <label htmlFor="symbol" className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                      Trading Symbol
                     </label>
                     {formData.assetType === "GOLD_SILVER" ||
                     formData.assetType === "CURRENCY" ? (
@@ -878,16 +807,13 @@ export default function InvestmentsClient() {
                           setFormData({ ...formData, symbol: e.target.value })
                         }
                         disabled={isEditing}
-                        className={cn(
-                          "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                          isEditing && "cursor-not-allowed opacity-60",
-                        )}
+                        className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold uppercase focus:outline-none disabled:opacity-50 text-foreground"
                         required
                       >
-                        <option value="">Select an asset</option>
-                        {(supportedAssets[formData.assetType] ?? []).map((asset) => (
-                          <option key={asset.slug} value={asset.slug}>
-                            {asset.label}
+                        <option value="" className="bg-background">SELECT ASSET</option>
+                        {(supportedAssets[formData.assetType as keyof SupportedAssets] ?? []).map((asset) => (
+                          <option key={asset.slug} value={asset.slug} className="bg-background">
+                            {asset.label.toUpperCase()}
                           </option>
                         ))}
                       </select>
@@ -900,76 +826,61 @@ export default function InvestmentsClient() {
                           setFormData({ ...formData, symbol: e.target.value })
                         }
                         disabled={isEditing}
-                        placeholder="e.g., TCD, AAPL"
-                        className={cn(
-                          "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm uppercase transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                          isEditing && "cursor-not-allowed opacity-60",
-                        )}
+                        placeholder="E.G. NVDA, BTC"
+                        className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold uppercase focus:outline-none disabled:opacity-50 placeholder:text-muted-foreground/30 text-foreground"
                         required
                       />
                     )}
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="quantity"
-                      className="mb-2 block text-xs text-muted-foreground"
-                    >
-                      Quantity
-                    </label>
-                    <input
-                      id="quantity"
-                      type="number"
-                      step="0.000001"
-                      min="0"
-                      value={formData.quantity}
-                      onChange={(e) =>
-                        setFormData({ ...formData, quantity: e.target.value })
-                      }
-                      placeholder="0"
-                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="quantity" className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                        Quantity
+                      </label>
+                      <input
+                        id="quantity"
+                        type="number"
+                        step="0.000001"
+                        min="0"
+                        value={formData.quantity}
+                        onChange={(e) =>
+                          setFormData({ ...formData, quantity: e.target.value })
+                        }
+                        className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold focus:outline-none text-foreground"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="avgCost" className="font-mono text-[10px] font-black uppercase text-muted-foreground">
+                        Avg Cost Basis
+                      </label>
+                      <input
+                        id="avgCost"
+                        type="number"
+                        step="0.000001"
+                        min="0"
+                        value={formData.avgCost}
+                        onChange={(e) =>
+                          setFormData({ ...formData, avgCost: e.target.value })
+                        }
+                        className="w-full border-2 border-foreground bg-background px-4 py-3 font-mono text-sm font-bold focus:outline-none text-foreground"
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="avgCost"
-                      className="mb-2 block text-xs text-muted-foreground"
-                    >
-                      Average Cost{(() => {
-                        const currency = isEditing
-                          ? editingAsset?.originalCurrency
-                          : selectedMarket?.currency;
-                        return currency ? ` (${currency})` : "";
-                      })()}
-                    </label>
-                    <input
-                      id="avgCost"
-                      type="number"
-                      step="0.000001"
-                      min="0"
-                      value={formData.avgCost}
-                      onChange={(e) =>
-                        setFormData({ ...formData, avgCost: e.target.value })
-                      }
-                      placeholder="0.00"
-                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
+                  <div className="flex flex-col gap-4 pt-4 sm:flex-row">
                     <button
                       type="submit"
-                      className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                      className="flex-1 border-2 border-foreground bg-foreground py-4 font-mono text-sm font-black uppercase text-background shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none"
                     >
-                      {editingAsset ? "Update Asset" : "Add Asset"}
+                      {editingAsset ? "Commit Update" : "Open Position"}
                     </button>
                     <button
                       type="button"
                       onClick={handleCloseForm}
-                      className="rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-medium transition hover:bg-muted/50"
+                      className="border-2 border-foreground bg-background px-8 py-4 font-mono text-sm font-black uppercase text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none"
                     >
                       Cancel
                     </button>
@@ -978,7 +889,8 @@ export default function InvestmentsClient() {
               </motion.div>
             </motion.div>
           )}
-        </AnimatePresence>        {modal && (
+        </AnimatePresence>
+        {modal && (
           <FeedbackModal
             open={modalOpen}
             type={modal.type}
@@ -1000,6 +912,6 @@ export default function InvestmentsClient() {
           />
         )}
       </div>
-    </>
+    </div>
   );
 }

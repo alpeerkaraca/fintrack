@@ -28,12 +28,12 @@ export async function parseApiResponse<T>(response: unknown): Promise<T> {
   }
 
   const apiResponse = response as ApiResponse<T>;
-
+  console.log("API Response:", apiResponse);
   if (!apiResponse.success) {
     throw new Error(apiResponse.error || apiResponse.message || "Request failed");
   }
 
-  if (apiResponse.data === undefined || apiResponse.data === null) {
+  if (!apiResponse.message && (apiResponse.data === undefined || apiResponse.data === null)) {
     throw new Error("No data in response");
   }
 

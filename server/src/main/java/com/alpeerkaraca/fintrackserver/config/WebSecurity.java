@@ -56,9 +56,12 @@ public class WebSecurity {
                             corsConfiguration.setAllowCredentials(true);
                             return corsConfiguration;
                         }))
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .csrf(csrf -> {
+                    CookieCsrfTokenRepository repo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+                    repo.setCookieCustomizer(customizer -> customizer.sameSite("None").secure(true));
+                    csrf.csrfTokenRepository(repo)
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler());
+                })
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/api/v1/auth/*").permitAll()
                         .anyRequest().authenticated())

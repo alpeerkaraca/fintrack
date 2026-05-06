@@ -19,7 +19,7 @@ export default function LoginClient() {
     setError("");
 
     if (!username.trim() || !password.trim()) {
-      setError("Username and password are required.");
+      setError("REQUIRED: USERNAME AND PASSWORD");
       return;
     }
 
@@ -30,8 +30,8 @@ export default function LoginClient() {
     } catch (submissionError) {
       const message =
         submissionError instanceof Error
-          ? submissionError.message
-          : "Login failed.";
+          ? submissionError.message.toUpperCase()
+          : "LOGIN FAILED";
       setError(message);
     } finally {
       setLoading(false);
@@ -39,66 +39,88 @@ export default function LoginClient() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
+    <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12 font-mono">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full rounded-2xl border border-border bg-card/70 p-6"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="w-full rounded-none border-2 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:border-white dark:bg-zinc-950 dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]"
       >
-        <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Login with your username and password.
-        </p>
+        <div className="mb-8 border-b-2 border-black pb-4 dark:border-white">
+          <h1 className="text-4xl font-black uppercase tracking-tighter">
+            Sign In
+          </h1>
+          <p className="mt-2 text-xs font-bold uppercase text-slate-500">
+            Authentication Required // v1.0
+          </p>
+        </div>
 
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="username">
-              Username
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <div className="space-y-2">
+            <label
+              className="block text-xs font-black uppercase tracking-widest"
+              htmlFor="username"
+            >
+              Username_
             </label>
             <input
               id="username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
               required
+              placeholder="ENTER_USERNAME"
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="password">
-              Password
+          <div className="space-y-2">
+            <label
+              className="block text-xs font-black uppercase tracking-widest"
+              htmlFor="password"
+            >
+              Password_
             </label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
               required
+              placeholder="••••••••"
             />
           </div>
 
           {error ? (
-            <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
-              {error}
-            </p>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.1 }}
+              className="rounded-none border-2 border-black bg-red-600 p-3 text-xs font-black text-white uppercase dark:border-white"
+            >
+              ERROR: {error}
+            </motion.div>
           ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            className="group relative w-full rounded-none border-2 border-black bg-black py-4 text-sm font-black text-white uppercase transition-all hover:bg-white hover:text-black disabled:opacity-50 dark:border-white dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white"
           >
-            {loading ? "Signing in..." : "Login"}
+            {loading ? "PROCESSING..." : "Execute_Login"}
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-muted-foreground">
-          No account yet?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </p>
+        <div className="mt-8 border-t-2 border-black pt-6 dark:border-white">
+          <p className="text-xs font-bold uppercase">
+            No account?{" "}
+            <Link
+              href="/register"
+              className="rounded-none bg-black px-2 py-1 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
+            >
+              REGISTER_NEW_USER
+            </Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

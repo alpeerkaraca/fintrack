@@ -9,7 +9,7 @@ import {
   PieChart,
   Plus,
   Search,
-  TrendingUp,
+  ArrowUpRight,
   Wallet,
   Tag,
   ArrowRight,
@@ -92,7 +92,7 @@ export function CommandPalette() {
   const navItems = React.useMemo(() => [
     { label: "Dashboard", icon: LayoutGrid, href: "/", iconName: "LayoutGrid" },
     { label: "Budget Entry", icon: Wallet, href: "/budget", iconName: "Wallet" },
-    { label: "Investments", icon: TrendingUp, href: "/investment", iconName: "TrendingUp" },
+    { label: "Investments", icon: ArrowUpRight, href: "/investment", iconName: "ArrowUpRight" },
     { label: "Reports", icon: PieChart, href: "/reports", iconName: "PieChart" },
   ], []);
 
@@ -145,7 +145,7 @@ export function CommandPalette() {
 
   const getIconComponent = (name: string): LucideIcon => {
     const icons: Record<string, LucideIcon> = {
-      LayoutGrid, Wallet, TrendingUp, PieChart, CreditCard, Tag, Search
+      LayoutGrid, Wallet, ArrowUpRight, PieChart, CreditCard, Tag, Search
     };
     return icons[name] || Search;
   };
@@ -154,55 +154,56 @@ export function CommandPalette() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="group relative flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm text-muted-foreground border border-border bg-muted/20 hover:bg-muted/40 hover:text-foreground transition-all duration-200"
+        className="group relative flex w-full items-center gap-3 px-4 py-3 rounded-none text-sm font-mono font-bold text-slate-900 border-2 border-slate-900 bg-white hover:bg-yellow-300 transition-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
       >
-        <Search className="h-4 w-4 transition-transform group-hover:scale-110" />
-        <span className="flex-1 text-left">Search...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted/50 px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-          <span className="text-xs">⌘</span>K
+        <Search className="h-4 w-4 stroke-[2.5px]" />
+        <span className="flex-1 text-left uppercase tracking-tighter">Execute_Command...</span>
+        <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded-none border-2 border-slate-900 bg-black px-1.5 font-mono text-[10px] font-bold text-white">
+          <span className="text-xs">^</span>K
         </kbd>
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-background/40 backdrop-blur-md transition-all animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-none transition-none animate-in fade-in duration-0">
           <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] sm:pt-[15vh] px-4">
             <Command
-              className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-card shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] animate-in slide-in-from-top-4 duration-300"
+              className="relative w-full max-w-xl overflow-hidden rounded-none border-4 border-slate-900 bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in slide-in-from-top-4 duration-200"
               onKeyDown={(e) => {
                 if (e.key === "Escape") setOpen(false);
               }}
             >
-              <div className="flex items-center border-b border-border px-4 py-4">
-                <Search className="mr-3 h-5 w-5 shrink-0 text-primary" />
+              <div className="flex items-center border-b-4 border-slate-900 px-4 py-4 bg-slate-50">
+                <Search className="mr-3 h-6 w-6 shrink-0 text-slate-900 stroke-[3px]" />
                 <Command.Input
                   autoFocus
-                  placeholder="Search transactions, categories, or navigation..."
-                  className="flex h-10 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground"
+                  placeholder="SYSOP@FINTRACK:~$ SEARCH_TARGET"
+                  className="flex h-12 w-full rounded-none bg-transparent py-3 text-lg font-mono font-bold uppercase tracking-tight outline-none placeholder:text-slate-400"
                   value={search}
                   onValueChange={setSearch}
                 />
                 {search && (
                   <button 
                     onClick={() => setSearch("")}
-                    className="p-1 hover:bg-muted rounded-full text-muted-foreground transition-colors"
+                    className="p-2 hover:bg-red-500 hover:text-white rounded-none border-2 border-slate-900 transition-none"
                   >
-                    <Plus className="h-4 w-4 rotate-45" />
+                    <Plus className="h-5 w-5 rotate-45 stroke-[3px]" />
                   </button>
                 )}
                 <div className="ml-4 flex items-center gap-1">
-                  <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-border bg-muted px-2 font-mono text-[10px] font-medium text-muted-foreground">
+                  <kbd className="pointer-events-none inline-flex h-7 select-none items-center gap-1 rounded-none border-2 border-slate-900 bg-black px-2 font-mono text-[10px] font-bold text-white">
                     ESC
                   </kbd>
                 </div>
               </div>
 
-              <Command.List className="max-h-[450px] overflow-y-auto p-3 scrollbar-none">
-                <Command.Empty className="py-12 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="p-3 rounded-full bg-muted/50 text-muted-foreground">
-                      <Search className="h-6 w-6" />
+              <Command.List className="max-h-[450px] overflow-y-auto p-0 scrollbar-none">
+                <Command.Empty className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-4 rounded-none border-4 border-slate-900 bg-red-100 text-red-600">
+                      <Search className="h-10 w-10 stroke-[3px]" />
                     </div>
-                    <p className="text-sm text-muted-foreground">No results found for &quot;{search}&quot;</p>
+                    <p className="text-sm font-mono font-black uppercase tracking-widest text-slate-900">Error: No_Results_Found</p>
+                    <p className="text-xs font-mono text-slate-500">Query &quot;{search}&quot; returned 0 bytes</p>
                   </div>
                 </Command.Empty>
 
@@ -210,9 +211,9 @@ export function CommandPalette() {
                   <>
                     <Command.Group
                       heading={
-                        <div className="flex items-center gap-2 px-2 py-2">
-                          <History className="h-3 w-3" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Recent</span>
+                        <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                          <History className="h-4 w-4 stroke-[2.5px]" />
+                          <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">Recent_Buffer</span>
                         </div>
                       }
                     >
@@ -222,23 +223,22 @@ export function CommandPalette() {
                           <Command.Item
                             key={cmd.href}
                             onSelect={() => runCommand(() => router.push(cmd.href))}
-                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
+                            className="flex cursor-pointer items-center gap-4 px-6 py-4 text-sm font-mono font-bold uppercase border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
                           >
-                            <Icon className="h-4 w-4 text-muted-foreground" />
+                            <Icon className="h-5 w-5 stroke-[2.5px]" />
                             <span>{cmd.label}</span>
                           </Command.Item>
                         );
                       })}
                     </Command.Group>
-                    <Command.Separator className="my-2 h-px bg-border/50" />
                   </>
                 )}
 
                 <Command.Group
                   heading={
-                    <div className="flex items-center gap-2 px-2 py-2">
-                      <ArrowRight className="h-3 w-3" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Navigation</span>
+                    <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                      <ArrowRight className="h-4 w-4 stroke-[2.5px]" />
+                      <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">System_Links</span>
                     </div>
                   }
                 >
@@ -246,139 +246,129 @@ export function CommandPalette() {
                     <Command.Item
                       key={item.href}
                       onSelect={() => runCommand(() => router.push(item.href), item.label, item.href, item.iconName)}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all group"
+                      className="flex cursor-pointer items-center gap-4 px-6 py-4 text-sm font-mono font-bold uppercase border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
                     >
-                      <item.icon className="h-4 w-4 text-muted-foreground group-aria-selected:text-primary transition-colors" />
+                      <item.icon className="h-5 w-5 stroke-[2.5px]" />
                       <span className="flex-1">{item.label}</span>
-                      <kbd className="hidden sm:inline-flex opacity-0 group-aria-selected:opacity-100 transition-opacity pointer-events-none h-5 select-none items-center gap-1 rounded bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                        ENTER
+                      <kbd className="hidden sm:inline-flex opacity-0 group-aria-selected:opacity-100 transition-none pointer-events-none h-6 select-none items-center gap-1 rounded-none border-2 border-white bg-black px-1.5 font-mono text-[10px] font-bold text-white uppercase">
+                        Enter
                       </kbd>
                     </Command.Item>
                   ))}
                 </Command.Group>
 
-                <Command.Separator className="my-2 h-px bg-border/50" />
-
                 <Command.Group
                   heading={
-                    <div className="flex items-center gap-2 px-2 py-2">
-                      <Plus className="h-3 w-3" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Quick Actions</span>
+                    <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                      <Plus className="h-4 w-4 stroke-[2.5px]" />
+                      <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">Quick_Access_Layer</span>
                     </div>
                   }
                 >
                   <Command.Item
                     onSelect={() => runCommand(() => router.push("/budget?action=new"))}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
+                    className="flex cursor-pointer items-center gap-4 px-6 py-4 text-sm font-mono font-bold uppercase border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
                   >
-                    <Calculator className="h-4 w-4 text-muted-foreground" />
-                    <span>Add New Transaction</span>
+                    <Calculator className="h-5 w-5 stroke-[2.5px]" />
+                    <span>Post_New_Transaction</span>
                   </Command.Item>
                   <Command.Item
                     onSelect={() => runCommand(() => router.push("/investment"))}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
+                    className="flex cursor-pointer items-center gap-4 px-6 py-4 text-sm font-mono font-bold uppercase border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
                   >
-                    <Plus className="h-4 w-4 text-muted-foreground" />
-                    <span>Add New Investment</span>
+                    <Plus className="h-5 w-5 stroke-[2.5px]" />
+                    <span>Initialize_New_Asset</span>
                   </Command.Item>
                 </Command.Group>
 
                 {results.categories.length > 0 && (
-                  <>
-                    <Command.Separator className="my-2 h-px bg-border/50" />
-                    <Command.Group
-                      heading={
-                        <div className="flex items-center gap-2 px-2 py-2">
-                          <Tag className="h-3 w-3" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Categories</span>
-                        </div>
-                      }
-                    >
-                      {results.categories.map((cat) => (
-                        <Command.Item
-                          key={cat.id}
-                          onSelect={() => runCommand(() => router.push(`/budget?category=${cat.id}`))}
-                          className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
-                        >
-                          <Tag className="h-4 w-4 text-muted-foreground" />
-                          <span>{cat.label}</span>
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                  </>
+                  <Command.Group
+                    heading={
+                      <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                        <Tag className="h-4 w-4 stroke-[2.5px]" />
+                        <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">Index_Categories</span>
+                      </div>
+                    }
+                  >
+                    {results.categories.map((cat) => (
+                      <Command.Item
+                        key={cat.id}
+                        onSelect={() => runCommand(() => router.push(`/budget?category=${cat.id}`))}
+                        className="flex cursor-pointer items-center gap-4 px-6 py-4 text-sm font-mono font-bold uppercase border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
+                      >
+                        <Tag className="h-5 w-5 stroke-[2.5px]" />
+                        <span>{cat.label}</span>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
                 )}
 
                 {results.investments.length > 0 && (
-                  <>
-                    <Command.Separator className="my-2 h-px bg-border/50" />
-                    <Command.Group
-                      heading={
-                        <div className="flex items-center gap-2 px-2 py-2">
-                          <TrendingUp className="h-3 w-3" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Investments</span>
+                  <Command.Group
+                    heading={
+                      <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                        <ArrowUpRight className="h-4 w-4 stroke-[2.5px]" />
+                        <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">Active_Instruments</span>
+                      </div>
+                    }
+                  >
+                    {results.investments.map((inv) => (
+                      <Command.Item
+                        key={inv.symbol}
+                        onSelect={() => runCommand(() => router.push(`/investment`))}
+                        className="flex cursor-pointer items-center justify-between px-6 py-4 border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
+                      >
+                        <div className="flex items-center gap-4">
+                          <ArrowUpRight className="h-5 w-5 stroke-[2.5px]" />
+                          <span className="text-sm font-mono font-bold uppercase">{inv.symbol} // {inv.name}</span>
                         </div>
-                      }
-                    >
-                      {results.investments.map((inv) => (
-                        <Command.Item
-                          key={inv.symbol}
-                          onSelect={() => runCommand(() => router.push(`/investment`))}
-                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
-                        >
-                          <div className="flex items-center gap-3">
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                            <span>{inv.symbol} - {inv.name}</span>
-                          </div>
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                  </>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
                 )}
 
                 {results.transactions.length > 0 && (
-                  <>
-                    <Command.Separator className="my-2 h-px bg-border/50" />
-                    <Command.Group
-                      heading={
-                        <div className="flex items-center gap-2 px-2 py-2">
-                          <CreditCard className="h-3 w-3" />
-                          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Transactions</span>
+                  <Command.Group
+                    heading={
+                      <div className="flex items-center gap-2 px-4 py-3 border-b-2 border-slate-900 bg-slate-100">
+                        <CreditCard className="h-4 w-4 stroke-[2.5px]" />
+                        <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-slate-900">Transaction_Log</span>
+                      </div>
+                    }
+                  >
+                    {results.transactions.map((tx) => (
+                      <Command.Item
+                        key={tx.id}
+                        onSelect={() => runCommand(() => router.push(`/budget?id=${tx.id}`))}
+                        className="flex cursor-pointer items-center justify-between px-6 py-4 border-b-2 border-slate-900 aria-selected:bg-black aria-selected:text-white transition-none"
+                      >
+                        <div className="flex items-center gap-4">
+                          <CreditCard className="h-5 w-5 stroke-[2.5px]" />
+                          <span className="text-sm font-mono font-bold uppercase">{tx.title}</span>
                         </div>
-                      }
-                    >
-                      {results.transactions.map((tx) => (
-                        <Command.Item
-                          key={tx.id}
-                          onSelect={() => runCommand(() => router.push(`/budget?id=${tx.id}`))}
-                          className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-3 text-sm text-foreground hover:bg-primary/10 aria-selected:bg-primary/10 aria-selected:text-primary transition-all"
-                        >
-                          <div className="flex items-center gap-3">
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                            <span>{tx.title}</span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            {new Date(tx.date).toLocaleDateString()}
-                          </span>
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                  </>
+                        <span className="text-[10px] font-mono font-bold opacity-70">
+                          {new Date(tx.date).toLocaleDateString()}
+                        </span>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
                 )}
 
                 {loading && (
-                  <div className="flex items-center justify-center py-6">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <div className="flex items-center justify-center py-10 bg-slate-50">
+                    <div className="h-8 w-8 animate-spin rounded-none border-4 border-black border-t-yellow-300" />
+                    <span className="ml-4 font-mono font-black text-xs uppercase animate-pulse">Processing_Request...</span>
                   </div>
                 )}
               </Command.List>
 
-              <div className="border-t border-border p-3 bg-muted/20 flex items-center justify-between text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
-                <div className="flex gap-4">
-                  <span className="flex items-center gap-1"><kbd className="border bg-background px-1 rounded">↑↓</kbd> Navigate</span>
-                  <span className="flex items-center gap-1"><kbd className="border bg-background px-1 rounded">↵</kbd> Select</span>
+              <div className="border-t-4 border-slate-900 p-4 bg-black flex items-center justify-between text-[10px] text-white font-mono font-black uppercase tracking-widest">
+                <div className="flex gap-6">
+                  <span className="flex items-center gap-2"><kbd className="border-2 border-white bg-slate-800 px-1 font-bold">↑↓</kbd> NAVIGATE</span>
+                  <span className="flex items-center gap-2"><kbd className="border-2 border-white bg-slate-800 px-1 font-bold">↵</kbd> SELECT</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>FinTrack Command Palette</span>
+                  <span className="text-yellow-300">FINTRACK_CORE_V1.0</span>
                 </div>
               </div>
             </Command>

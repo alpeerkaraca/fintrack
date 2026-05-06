@@ -149,7 +149,7 @@ export default function DashboardClient() {
         const response = await authFetch("/api/v1/metadata/available-months");
         const payload = await parseApiResponse<MonthOption[]>(response);
         if (isActive) {
-          setMonthOptions(payload ?? []);
+          setMonthOptions(Array.isArray(payload) ? payload : []);
         }
       } catch {
         if (isActive) {
@@ -264,36 +264,36 @@ export default function DashboardClient() {
   if (isLoading && !dashboard) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted/60 border-t-primary" />
+        <div data-testid="dashboard-loading-spinner" className="h-12 w-12 animate-spin rounded-none border-4 border-foreground border-t-yellow-300" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="border-b border-border px-6 py-6 lg:px-10">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="border-b-4 border-foreground bg-background px-6 py-10 lg:px-10">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Welcome back</p>
-            <h2 className="text-2xl font-semibold">Dashboard Overview</h2>
+            <p className="text-xs font-mono font-bold uppercase tracking-widest text-slate-500 mb-1">Authenticated_Session</p>
+            <h2 className="text-4xl font-black uppercase tracking-tighter">System_Overview</h2>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Month</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="rounded-none border-2 border-foreground bg-muted/30 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 mb-2">Temporal_Index</p>
+              <div className="flex flex-wrap gap-2">
                 {monthOptions.map((item) => (
                   <button
                     key={item.value}
                     type="button"
                     onClick={() => setSelectedMonth(item.value)}
                     className={cn(
-                      "rounded-lg px-3 py-1 text-xs transition",
+                      "rounded-none border-2 border-foreground px-4 py-1 text-xs font-mono font-bold transition-none",
                       item.value === selectedMonth
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/70 text-muted-foreground hover:text-foreground",
+                        ? "bg-black text-white"
+                        : "bg-background text-slate-900 hover:bg-yellow-300",
                     )}
                   >
-                    {item.label}
+                    {item.label.toUpperCase()}
                   </button>
                 ))}
               </div>
@@ -301,533 +301,387 @@ export default function DashboardClient() {
           </div>
         </div>
         {error ? (
-          <p className="mt-3 text-xs text-rose-400">{error}</p>
+          <p className="mt-4 font-mono text-xs font-bold text-red-600 bg-red-100 p-2 border-2 border-red-600 inline-block">ERROR: {error.toUpperCase()}</p>
         ) : isLoading ? (
-          <p className="mt-3 text-xs text-muted-foreground">Loading dashboard...</p>
+          <p className="mt-4 font-mono text-xs font-bold text-slate-500 animate-pulse uppercase">Syncing_Data_Stream...</p>
         ) : null}
       </div>
 
-      <section className="px-6 py-6 lg:px-10">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="px-6 py-10 lg:px-10">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="rounded-none border-4 border-foreground bg-background p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Monthly Income</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-muted-foreground mb-4">Total_Income</p>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="text-3xl font-mono font-black tracking-tighter text-[#00FF00]">
                   {formatCurrency(summary?.income ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">Selected month total</p>
+                <p className="mt-1 text-[10px] font-mono font-bold uppercase text-slate-400">Status: Nominal</p>
               </div>
-              <div className="rounded-full bg-emerald-500/10 p-3 text-emerald-400">
-                <ArrowUpRight className="h-5 w-5" />
+              <div className="border-4 border-foreground bg-[#00FF00] p-2 text-black">
+                <ArrowUpRight className="h-6 w-6 stroke-[3px]" />
               </div>
             </div>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-none border-4 border-foreground bg-background p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Monthly Expenses</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-muted-foreground mb-4">Total_Expenses</p>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="text-3xl font-mono font-black tracking-tighter text-[#FF0000]">
                   {formatCurrency(summary?.expense ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">All categories</p>
+                <p className="mt-1 text-[10px] font-mono font-bold uppercase text-slate-400">Usage: Active</p>
               </div>
-              <div className="rounded-full bg-rose-500/10 p-3 text-rose-400">
-                <ArrowDownRight className="h-5 w-5" />
+              <div className="border-4 border-foreground bg-[#FF0000] p-2 text-white">
+                <ArrowDownRight className="h-6 w-6 stroke-[3px]" />
               </div>
             </div>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-none border-4 border-foreground bg-background p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Net Savings</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-muted-foreground mb-4">Net_Savings</p>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="text-3xl font-mono font-black tracking-tighter text-sky-600 dark:text-sky-400">
                   {formatCurrency(summary?.savings ?? 0)}
                 </p>
-                <p className="text-xs text-muted-foreground">Income - Expenses</p>
+                <p className="mt-1 text-[10px] font-mono font-bold uppercase text-slate-400">Delta_Value</p>
               </div>
-              <div className="rounded-full bg-sky-500/10 p-3 text-sky-400">
-                <Wallet className="h-5 w-5" />
+              <div className="border-4 border-foreground bg-sky-600 p-2 text-white">
+                <Wallet className="h-6 w-6 stroke-[3px]" />
               </div>
             </div>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="rounded-2xl border border-border bg-card/70 p-5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-none border-4 border-foreground bg-background p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)]"
           >
-            <p className="text-xs text-muted-foreground">Credit Card Limit</p>
-            <div className="mt-4 flex items-center justify-between">
+            <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-muted-foreground mb-4">Available_Credit</p>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-semibold">
+                <p className="text-3xl font-mono font-black tracking-tighter text-amber-600 dark:text-amber-400">
                   {formatCurrency(creditCardRemaining)}
                 </p>
-                <p className="text-xs text-muted-foreground">Current balance</p>
+                <p className="mt-1 text-[10px] font-mono font-bold uppercase text-slate-400">Limit_Buffer</p>
               </div>
-              <div className="rounded-full bg-amber-500/10 p-3 text-amber-400">
-                <CreditCard className="h-5 w-5" />
+              <div className="border-4 border-foreground bg-amber-600 p-2 text-white">
+                <CreditCard className="h-6 w-6 stroke-[3px]" />
               </div>
             </div>
           </motion.div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Boss Fight
-                </p>
-                <h3 className="text-lg font-semibold">{selectedMonthLabel} Alert</h3>
-              </div>
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs",
-                  bossFightTriggered
-                    ? "bg-rose-500/15 text-rose-300"
-                    : "bg-emerald-500/10 text-emerald-300",
-                )}
+        {(latestTransactions.length > 0 || installmentTransactions.length > 0) && (
+          <div className="mt-10 grid gap-10 lg:grid-cols-[1.5fr_1fr]">
+            {latestTransactions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
               >
-                {bossFightTriggered ? "Risk Level High" : "Stable"}
-              </span>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {bossFightTriggered
-                ? "Expenses are above 85% of income. Prepare an emergency buffer."
-                : "Spending ratio is under control for this month."}
-            </p>
-            {summary && (
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-background/60 p-4">
-                  <p className="text-xs text-muted-foreground">Income</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {formatCurrency(summary.income)}
-                  </p>
+                <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6">
+                  <div>
+                    <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Event_Log</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Recent_Activity</h3>
+                  </div>
                 </div>
-                <div className="rounded-xl bg-background/60 p-4">
-                  <p className="text-xs text-muted-foreground">Expenses</p>
-                  <p className="mt-1 text-lg font-semibold">
-                    {formatCurrency(summary.expense)}
-                  </p>
+                <div className="space-y-4">
+                  {latestTransactions.map((transaction) => (
+                    <Link
+                      key={transaction.id}
+                      href={`/budget?category=${transaction.category}`}
+                      className="flex items-center justify-between rounded-none border-2 border-foreground bg-background px-6 py-4 hover:bg-foreground hover:text-background transition-none group"
+                    >
+                      <div>
+                        <p className="font-mono font-black uppercase text-sm">{transaction.title}</p>
+                        <p className="font-mono text-[10px] font-bold text-muted-foreground uppercase group-hover:text-background/60">
+                          {getCategoryLabel(transaction.category)} // {transaction.date}
+                        </p>
+                      </div>
+                      <p
+                        className={cn(
+                          "font-mono font-black text-sm",
+                          transaction.type === "expense"
+                            ? "text-[#FF0000] group-hover:text-background"
+                            : "text-[#00FF00] group-hover:text-background",
+                        )}
+                      >
+                        {transaction.type === "expense" ? "-" : "+"}
+                        {formatCurrency(transaction.amountTry)}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
-              </div>
+              </motion.div>
             )}
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Forecast
-                </p>
-                <h3 className="text-lg font-semibold">Savings Forecast</h3>
-              </div>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                Updated from backend
-              </span>
-            </div>
-            <div className="mt-4 h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={netSavingsChart} margin={{ left: -12, right: 12 }}>
-                  <defs>
-                    <linearGradient id="netSavings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `${value}k`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--card)",
-                      borderRadius: 12,
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
-                    }}
-                    formatter={(value) => [
-                      `${formatNumber(Number(value) * 1000)} TL`,
-                      "Net Savings",
-                    ]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="netSavings"
-                    stroke="var(--primary)"
-                    fill="url(#netSavings)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-        </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Budget Limits
-                </p>
-                <h3 className="text-lg font-semibold">Category Watchlist</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
-            </div>
-            <div className="mt-5 grid gap-4">
-              {(dashboard?.categoryWatchlist ?? []).map((category, index) => {
-                const state = getLimitState(category);
-                const ratio =
-                  category.limitTry > 0
-                    ? Math.min((category.spentTry / category.limitTry) * 100, 100)
-                    : 0;
-                return (
-                  <motion.div
-                    key={category.category}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
-                  >
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{getCategoryLabel(category.category)}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
-                      </span>
+            {installmentTransactions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
+              >
+                <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6">
+                  <div>
+                    <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Schedule_Sync</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Active_Installments</h3>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {installmentTransactions.map((transaction) => (
+                    <div
+                      key={transaction.id}
+                      className="rounded-none border-2 border-foreground bg-muted/30 px-6 py-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-mono font-black uppercase text-sm text-foreground">{transaction.title}</p>
+                          <p className="font-mono text-[10px] font-bold text-muted-foreground uppercase">
+                            {getCategoryLabel(transaction.category)} // {transaction.date}
+                          </p>
+                        </div>
+                        <p className="font-mono font-black text-sm text-amber-600 dark:text-amber-400">
+                          {formatCurrency(transaction.amountTry)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
+                  ))}
+                </div>
+                <p className="mt-8 font-mono text-[10px] font-bold text-muted-foreground uppercase leading-tight italic">
+                  * DISTRIBUTION_ALGORITHM_APPLIED_AUTOMATICALLY_ACROSS_TIME_AXIS.
+                </p>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          {netSavingsChart.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
+            >
+              <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6 text-foreground">
+                <div>
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Predictive_Analysis</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight">Savings_Forecast</h3>
+                </div>
+              </div>
+              <div className="h-64 mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={netSavingsChart} margin={{ left: -20, right: 0, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fill: 'currentColor', fontWeight: 'bold', fontSize: 10, fontFamily: 'monospace' }}
+                      tickLine={{ stroke: 'currentColor', strokeWidth: 2 }}
+                      axisLine={{ stroke: 'currentColor', strokeWidth: 2 }}
+                    />
+                    <YAxis
+                      tick={{ fill: 'currentColor', fontWeight: 'bold', fontSize: 10, fontFamily: 'monospace' }}
+                      tickLine={{ stroke: 'currentColor', strokeWidth: 2 }}
+                      axisLine={{ stroke: 'currentColor', strokeWidth: 2 }}
+                      tickFormatter={(value) => `${value}K`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--background)",
+                        borderRadius: 0,
+                        border: "4px solid var(--foreground)",
+                        fontFamily: "monospace",
+                        fontWeight: "bold",
+                        color: "var(--foreground)"
+                      }}
+                      cursor={{ stroke: 'currentColor', strokeWidth: 2 }}
+                      formatter={(value) => [
+                        `${formatNumber(Number(value) * 1000)} TL`,
+                        "NET_SAVINGS",
+                      ]}
+                    />
+                    <Area
+                      type="stepAfter"
+                      dataKey="netSavings"
+                      stroke="currentColor"
+                      fill="#FFFF00"
+                      fillOpacity={0.4}
+                      strokeWidth={4}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+
+          {(dashboard?.categoryWatchlist ?? []).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
+            >
+              <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6">
+                <div>
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Threshold_Monitor</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Category_Watchlist</h3>
+                </div>
+              </div>
+              <div className="space-y-6">
+                {(dashboard?.categoryWatchlist ?? []).map((category, index) => {
+                  const state = getLimitState(category);
+                  const ratio =
+                    category.limitTry > 0
+                      ? Math.min((category.spentTry / category.limitTry) * 100, 100)
+                      : 0;
+                  return (
+                    <motion.div
+                      key={category.category}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono font-black uppercase text-xs text-foreground">{getCategoryLabel(category.category)}</span>
+                        <span className="font-mono font-bold text-[10px] bg-foreground text-background px-2 py-0.5">
+                          {formatCurrency(category.spentTry)} / {formatCurrency(category.limitTry)}
+                        </span>
+                      </div>
+                      <div className="h-6 w-full rounded-none border-2 border-foreground bg-muted/20 p-0.5">
+                        <div
+                          className={cn(
+                            "h-full transition-all duration-500",
+                            state === "danger"
+                              ? "bg-[#FF0000]"
+                              : state === "warning"
+                                ? "bg-yellow-400"
+                                : "bg-[#00FF00]",
+                          )}
+                          style={{ width: `${ratio}%` }}
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {(dashboard?.investments ?? []).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
+            >
+              <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6">
+                <div>
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Asset_Inventory</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Investment_Vault</h3>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {(dashboard?.investments ?? []).map((asset) => (
+                  <motion.div
+                    key={asset.symbol}
+                    className="rounded-none border-2 border-foreground bg-background p-4 hover:bg-muted/10 transition-none"
+                  >
+                    <div className="flex items-center justify-between border-b-2 border-foreground pb-3 mb-3">
+                      <div>
+                        <p className="font-mono font-black text-lg uppercase tracking-tight text-foreground">{asset.symbol}</p>
+                        <p className="font-mono text-[10px] font-bold text-muted-foreground uppercase">
+                          {formatAssetName(asset.name)}
+                        </p>
+                      </div>
                       <div
                         className={cn(
-                          "h-2 rounded-full",
-                          state === "danger"
-                            ? "bg-rose-500"
-                            : state === "warning"
-                              ? "bg-amber-400"
-                              : "bg-emerald-500",
+                          "border-2 border-foreground px-3 py-1 font-mono font-black text-xs",
+                          asset.changePercent >= 0
+                            ? "bg-[#00FF00] text-black"
+                            : "bg-[#FF0000] text-white",
                         )}
-                        style={{ width: `${ratio}%` }}
-                      />
+                      >
+                        {asset.changePercent >= 0 ? "+" : ""}
+                        {asset.changePercent.toFixed(2)}%
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[10px] font-mono font-bold uppercase text-muted-foreground">Qty</p>
+                        <p className="font-mono font-black text-foreground">{asset.quantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-mono font-bold uppercase text-muted-foreground">Avg_Cost</p>
+                        <p className="font-mono font-black flex items-center gap-1 text-foreground">
+                          {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 4)}
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.7 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Investments
-                </p>
-                <h3 className="text-lg font-semibold">Mutual Funds</h3>
+          {(dashboard?.savingsGoals ?? []).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-none border-4 border-foreground bg-background p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.1)]"
+            >
+              <div className="flex items-center justify-between border-b-4 border-foreground pb-6 mb-6">
+                <div>
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-muted-foreground">Mission_Objectives</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-foreground">Savings_Goals</h3>
+                </div>
+                <button className="text-xs font-mono font-black uppercase underline hover:text-sky-600 transition-none text-foreground">
+                  Expand_List
+                </button>
               </div>
-              <span className="text-xs text-muted-foreground">Latest snapshot</span>
-            </div>
-            <div className="mt-5 space-y-4">
-              <AnimatePresence mode="wait">
-                {(dashboard?.investments ?? []).length === 0 ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center"
-                  >
-                    <p className="text-xs text-muted-foreground">No active investments</p>
-                  </motion.div>
-                ) : (
-                  <motion.div key="list" className="space-y-4">
-                    {(dashboard?.investments ?? []).map((asset, index) => (
+              <div className="space-y-8">
+                {(dashboard?.savingsGoals ?? []).map((goal) => (
+                  <motion.div key={goal.id}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-col">
+                        <span className="font-mono font-black uppercase text-xs text-foreground">{goal.title}</span>
+                        {goal.targetDate && (
+                          <span className="font-mono text-[10px] font-bold text-muted-foreground">
+                            ETA: {goal.targetDate}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-black text-sm bg-foreground text-background px-2 py-0.5">
+                          {goal.progressPercent.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-6 w-full rounded-none border-2 border-foreground bg-muted/20 p-0.5">
                       <motion.div
-                        key={asset.symbol}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 + index * 0.05, duration: 0.3 }}
-                        className="rounded-xl border border-border bg-background/60 p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold">{asset.symbol}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatAssetName(asset.name)}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
-                            </p>
-                          </div>
-                          <div
-                            className={cn(
-                              "rounded-full px-3 py-1 text-xs",
-                              asset.changePercent >= 0
-                                ? "bg-emerald-500/10 text-emerald-300"
-                                : "bg-rose-500/10 text-rose-300",
-                            )}
-                          >
-                            {asset.changePercent >= 0 ? "+" : ""}
-                            {asset.changePercent.toFixed(2)}%
-                          </div>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
-                          <div>
-                            <p>Quantity</p>
-                            <p className="text-sm font-semibold text-foreground">
-                              {asset.quantity}
-                            </p>
-                          </div>
-                          <div>
-                            <p>Avg Cost</p>
-                            <div className="mt-1 space-y-1 text-foreground">
-                              <p className="flex items-center gap-1 text-sm font-semibold">
-                                <TurkishLira className="h-3.5 w-3.5" />
-                                {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
+                        className="h-full bg-sky-600 transition-all duration-1000"
+                      />
+                    </div>
+                    <p className="mt-2 font-mono text-[10px] font-bold text-muted-foreground uppercase">
+                      REMAINING: {formatCurrency(goal.targetAmount - goal.currentAmount)}
+                    </p>
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.75 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Targets
-                </p>
-                <h3 className="text-lg font-semibold">Savings Goals</h3>
+                ))}
               </div>
-              <button className="text-xs text-primary hover:underline">
-                View All
-              </button>
-            </div>
-            <div className="mt-5 space-y-5">
-              <AnimatePresence mode="wait">
-                {(dashboard?.savingsGoals ?? []).length === 0 ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="rounded-xl border border-dashed border-border bg-background/40 py-10 text-center"
-                  >
-                    <p className="text-xs text-muted-foreground">No active goals yet</p>
-                  </motion.div>
-                ) : (
-                  <motion.div key="list" className="space-y-5">
-                    {(dashboard?.savingsGoals ?? []).map((goal, index) => (
-                      <motion.div
-                        key={goal.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.85 + index * 0.05, duration: 0.3 }}
-                      >
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{goal.title}</span>
-                            {goal.targetDate && (
-                              <span className="text-[10px] text-muted-foreground">
-                                Target: {goal.targetDate}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <span className="font-semibold">
-                              %{goal.progressPercent.toFixed(0)}
-                            </span>
-                            <p className="text-[10px] text-muted-foreground">
-                              {formatCurrency(goal.targetAmount - goal.currentAmount)}{" "}
-                              left
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-2 h-2 w-full rounded-full bg-muted/60">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(goal.progressPercent, 100)}%` }}
-                            transition={{ duration: 0.8, delay: 1.0 + index * 0.05 }}
-                            className="h-2 rounded-full bg-primary transition-all duration-500"
-                          />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.8 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Transactions
-                </p>
-                <h3 className="text-lg font-semibold">Latest Activity</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
-            </div>
-            <div className="mt-5 space-y-4">
-              <AnimatePresence mode="wait">
-                {latestTransactions.length === 0 ? (
-                  <motion.p
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center text-sm text-muted-foreground py-4"
-                  >
-                    No recent activity
-                  </motion.p>
-                ) : (
-                  <motion.div key="list" className="space-y-4">
-                    {latestTransactions.map((transaction, index) => (
-                      <motion.div
-                        key={transaction.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.9 + index * 0.05, duration: 0.3 }}
-                      >
-                        <Link
-                          href={`/budget?category=${transaction.category}`}
-                          className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 transition hover:bg-muted/40"
-                        >
-                          <div>
-                            <p className="text-sm font-semibold">{transaction.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {getCategoryLabel(transaction.category)} · {transaction.date}
-                            </p>
-                          </div>
-                          <p
-                            className={cn(
-                              "text-sm font-semibold",
-                              transaction.type === "expense"
-                                ? "text-rose-400"
-                                : "text-emerald-400",
-                            )}
-                          >
-                            {transaction.type === "expense" ? "-" : "+"}
-                            {formatCurrency(transaction.amountTry)}
-                          </p>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.9 }}
-            className="rounded-2xl border border-border bg-card/60 p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Installments
-                </p>
-                <h3 className="text-lg font-semibold">Smart Schedule</h3>
-              </div>
-              <span className="text-xs text-muted-foreground">Auto-distributed</span>
-            </div>
-            <div className="mt-5 space-y-4">
-              <AnimatePresence mode="wait">
-                {installmentTransactions.length === 0 ? (
-                  <motion.p
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-center text-sm text-muted-foreground py-4"
-                  >
-                    No active installments
-                  </motion.p>
-                ) : (
-                  <motion.div key="list" className="space-y-4">
-                    {installmentTransactions.map((transaction, index) => (
-                      <motion.div
-                        key={transaction.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.0 + index * 0.05, duration: 0.3 }}
-                        className="rounded-xl border border-border bg-background/60 px-4 py-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold">{transaction.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {getCategoryLabel(transaction.category)} · {transaction.date}
-                            </p>
-                          </div>
-                          <p className="text-sm font-semibold text-amber-400">
-                            {formatCurrency(transaction.amountTry)}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Installment costs are automatically distributed across active schedules.
-            </p>
-          </motion.div>
+            </motion.div>
+          )}
         </div>
       </section>
     </>

@@ -23,13 +23,14 @@ public class MetadataService {
 
     private static final DateTimeFormatter MONTH_LABEL_FORMAT = DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH);
 
+
     public List<CategoryResponse> getAvailableCategories() {
         return Arrays.stream(Category.values())
                 .map(cat -> new CategoryResponse(
                         cat.name(),
                         cat.getLabel(),
                         cat.getIcon()
-                )).toList();
+                )).toList().stream().sorted(Comparator.comparing(CategoryResponse::label)).toList();
     }
 
     public List<StockMarketResponse> getAvailableMarkets() {
@@ -69,6 +70,6 @@ public class MetadataService {
                         ym.toString(), // e.g. "2026-03"
                         ym.format(MONTH_LABEL_FORMAT) // e.g. "Mar 2026"
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
 }
