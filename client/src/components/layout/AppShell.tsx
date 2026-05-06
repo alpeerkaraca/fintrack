@@ -8,7 +8,7 @@ import {
   LogOut,
   LayoutGrid,
   PieChart,
-  TrendingUp,
+  ArrowUpRight,
   Wallet,
 } from "lucide-react";
 
@@ -17,11 +17,12 @@ import { cn } from "@/lib/utils";
 import { authFetch, signOut } from "@/lib/auth";
 import { parseApiResponse } from "@/lib/api";
 import { CommandPalette } from "./CommandPalette";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutGrid, href: "/" },
   { label: "Budget Entry", icon: Wallet, href: "/budget" },
-  { label: "Investments", icon: TrendingUp, href: "/investment" },
+  { label: "Investments", icon: ArrowUpRight, href: "/investment" },
   { label: "Reports", icon: PieChart, href: "/reports" },
 ];
 
@@ -78,72 +79,78 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-yellow-300 transition-colors duration-300">
       <div className="flex flex-col lg:flex-row">
-        <aside className="flex h-full w-full flex-col border-b border-border bg-card/60 lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
-          <div className="px-6 py-7 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary grid place-items-center font-semibold">
-              FT
+        <aside className="flex h-full w-full flex-col border-b-2 border-slate-900 dark:border-white bg-background lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r-2">
+          <div className="px-6 py-8 flex items-center justify-between border-b-2 border-slate-900 dark:border-white">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-none border-2 border-slate-900 dark:border-white bg-foreground text-background grid place-items-center font-mono font-bold text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]">
+                FT
+              </div>
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">System.Finance</p>
+                <h1 className="text-xl font-black uppercase tracking-tighter">FinTrack</h1>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Personal Finance</p>
-              <h1 className="text-lg font-semibold">FinTrack</h1>
-            </div>
+            <ThemeToggle />
           </div>
-          <div className="px-6 mb-4">
+          <div className="px-6 py-6 border-b-2 border-slate-900 dark:border-white bg-muted/30">
             <CommandPalette />
           </div>
-          <nav className="flex-1 px-4 pb-6">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition",
-                  isActivePath(pathname, item.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+          <nav className="flex-1 px-0 py-0 overflow-y-auto">
+            {NAV_ITEMS.map((item) => {
+              const active = isActivePath(pathname, item.href);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-6 py-4 border-b-2 border-slate-900 dark:border-white text-sm font-bold uppercase tracking-tight transition-none",
+                    active
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-yellow-300 dark:hover:bg-yellow-400 dark:hover:text-black",
+                  )}
+                >
+                  <item.icon className={cn("h-5 w-5 stroke-[2.5px]", active ? "text-background" : "text-foreground")} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
-          <div className="px-6 pb-8">
-            <div className="rounded-2xl border border-border bg-background/80 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Live FX
+          <div className="p-6 border-t-2 border-slate-900 dark:border-white bg-muted/30">
+            <div className="rounded-none border-2 border-slate-900 dark:border-white bg-background p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]">
+              <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                Live_Market_Data
               </p>
               <div className="mt-2 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold">USD/TRY</p>
+                  <p className="text-xs font-mono font-bold text-foreground">USD/TRY</p>
                   {isRateLoading ? (
-                    <div className="mt-1 h-7 w-20 rounded-lg bg-muted/60 animate-pulse" />
+                    <div className="mt-1 h-8 w-24 bg-muted animate-pulse border border-slate-900 dark:border-white" />
                   ) : (
-                    <p className="text-2xl font-semibold">
+                    <p className="text-2xl font-mono font-black tracking-tighter">
                       {(usdRate ?? USD_TRY_RATE).toFixed(4)}
                     </p>
                   )}
                 </div>
-                <BadgeDollarSign className="h-6 w-6 text-primary" />
+                <BadgeDollarSign className="h-8 w-8 text-foreground stroke-[2.5px]" />
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Updated once a day.
+              <p className="mt-2 text-[10px] font-mono text-slate-500 dark:text-slate-400 italic">
+                sync_complete
               </p>
             </div>
             <button
               type="button"
               onClick={handleSignOut}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2.5 text-sm text-muted-foreground transition hover:text-foreground hover:bg-muted/50"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-none border-2 border-slate-900 dark:border-white bg-background px-4 py-3 text-xs font-black uppercase tracking-widest transition-none hover:bg-red-500 hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
             >
-              <LogOut className="h-4 w-4" />
-              Sign out
+              <LogOut className="h-4 w-4 stroke-[3px]" />
+              Terminate Session
             </button>
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1 bg-muted/10 dark:bg-slate-950 transition-colors duration-300">{children}</main>
       </div>
     </div>
   );
