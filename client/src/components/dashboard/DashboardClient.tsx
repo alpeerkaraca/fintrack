@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Area,
   AreaChart,
@@ -308,7 +309,12 @@ export default function DashboardClient() {
 
       <section className="px-6 py-6 lg:px-10">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Monthly Income</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -321,8 +327,13 @@ export default function DashboardClient() {
                 <ArrowUpRight className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Monthly Expenses</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -335,8 +346,13 @@ export default function DashboardClient() {
                 <ArrowDownRight className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Net Savings</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -349,8 +365,13 @@ export default function DashboardClient() {
                 <Wallet className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Credit Card Limit</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -363,11 +384,16 @@ export default function DashboardClient() {
                 <CreditCard className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -407,8 +433,13 @@ export default function DashboardClient() {
                 </div>
               </div>
             )}
-          </div>
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -457,11 +488,16 @@ export default function DashboardClient() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.6 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -472,14 +508,19 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
             </div>
             <div className="mt-5 grid gap-4">
-              {(dashboard?.categoryWatchlist ?? []).map((category) => {
+              {(dashboard?.categoryWatchlist ?? []).map((category, index) => {
                 const state = getLimitState(category);
                 const ratio =
                   category.limitTry > 0
                     ? Math.min((category.spentTry / category.limitTry) * 100, 100)
                     : 0;
                 return (
-                  <div key={category.category}>
+                  <motion.div
+                    key={category.category}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
+                  >
                     <div className="flex items-center justify-between text-sm">
                       <span>{getCategoryLabel(category.category)}</span>
                       <span className="text-xs text-muted-foreground">
@@ -499,12 +540,17 @@ export default function DashboardClient() {
                         style={{ width: `${ratio}%` }}
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.7 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -515,9 +561,12 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">Latest snapshot</span>
             </div>
             <div className="mt-5 space-y-4">
-              {(dashboard?.investments ?? []).map((asset) => (
-                <div
+              {(dashboard?.investments ?? []).map((asset, index) => (
+                <motion.div
                   key={asset.symbol}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 + index * 0.05, duration: 0.3 }}
                   className="rounded-xl border border-border bg-background/60 p-4"
                 >
                   <div className="flex items-center justify-between">
@@ -607,14 +656,19 @@ export default function DashboardClient() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.8 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -625,33 +679,57 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">{selectedMonthLabel}</span>
             </div>
             <div className="mt-5 space-y-4">
-              {latestTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{transaction.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {getCategoryLabel(transaction.category)} · {transaction.date}
-                    </p>
-                  </div>
-                  <p
-                    className={cn(
-                      "text-sm font-semibold",
-                      transaction.type === "expense"
-                        ? "text-rose-400"
-                        : "text-emerald-400",
-                    )}
+              <AnimatePresence mode="wait">
+                {latestTransactions.length === 0 ? (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center text-sm text-muted-foreground py-4"
                   >
-                    {transaction.type === "expense" ? "-" : "+"}
-                    {formatCurrency(transaction.amountTry)}
-                  </p>
-                </div>
-              ))}
+                    No recent activity
+                  </motion.p>
+                ) : (
+                  <motion.div key="list" className="space-y-4">
+                    {latestTransactions.map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.9 + index * 0.05, duration: 0.3 }}
+                        className="flex items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold">{transaction.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {getCategoryLabel(transaction.category)} · {transaction.date}
+                          </p>
+                        </div>
+                        <p
+                          className={cn(
+                            "text-sm font-semibold",
+                            transaction.type === "expense"
+                              ? "text-rose-400"
+                              : "text-emerald-400",
+                          )}
+                        >
+                          {transaction.type === "expense" ? "-" : "+"}
+                          {formatCurrency(transaction.amountTry)}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-          <div className="rounded-2xl border border-border bg-card/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.9 }}
+            className="rounded-2xl border border-border bg-card/60 p-6"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -662,29 +740,48 @@ export default function DashboardClient() {
               <span className="text-xs text-muted-foreground">Auto-distributed</span>
             </div>
             <div className="mt-5 space-y-4">
-              {installmentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="rounded-xl border border-border bg-background/60 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold">{transaction.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getCategoryLabel(transaction.category)} · {transaction.date}
-                      </p>
-                    </div>
-                    <p className="text-sm font-semibold text-amber-400">
-                      {formatCurrency(transaction.amountTry)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <AnimatePresence mode="wait">
+                {installmentTransactions.length === 0 ? (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center text-sm text-muted-foreground py-4"
+                  >
+                    No active installments
+                  </motion.p>
+                ) : (
+                  <motion.div key="list" className="space-y-4">
+                    {installmentTransactions.map((transaction, index) => (
+                      <motion.div
+                        key={transaction.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.0 + index * 0.05, duration: 0.3 }}
+                        className="rounded-xl border border-border bg-background/60 px-4 py-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">{transaction.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getCategoryLabel(transaction.category)} · {transaction.date}
+                            </p>
+                          </div>
+                          <p className="text-sm font-semibold text-amber-400">
+                            {formatCurrency(transaction.amountTry)}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
               Installment costs are automatically distributed across active schedules.
             </p>
-          </div>
+          </motion.div>
         </div>
       </section>
     </>

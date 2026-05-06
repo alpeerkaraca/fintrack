@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 import { login } from "@/lib/auth";
 
@@ -39,7 +40,12 @@ export default function LoginClient() {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
-      <div className="w-full rounded-2xl border border-border bg-card/70 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full rounded-2xl border border-border bg-card/70 p-6"
+      >
         <h1 className="text-2xl font-semibold">Sign in</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Login with your username and password.
@@ -93,7 +99,7 @@ export default function LoginClient() {
             Register
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

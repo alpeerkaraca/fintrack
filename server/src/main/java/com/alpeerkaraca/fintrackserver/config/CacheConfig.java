@@ -77,6 +77,8 @@ public class CacheConfig {
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
+        template.setHashKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
         return template;
     }
 }

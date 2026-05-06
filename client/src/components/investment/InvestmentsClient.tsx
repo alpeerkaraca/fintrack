@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Coins,
   DollarSign,
@@ -413,7 +414,12 @@ export default function InvestmentsClient() {
           </div>
         )}
         <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Total Invested</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -426,9 +432,14 @@ export default function InvestmentsClient() {
                 <Wallet className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Current Value</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -441,9 +452,14 @@ export default function InvestmentsClient() {
                 <TrendingUp className="h-5 w-5" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Total P/L</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -473,9 +489,14 @@ export default function InvestmentsClient() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="rounded-2xl border border-border bg-card/70 p-5"
+          >
             <p className="text-xs text-muted-foreground">Return</p>
             <div className="mt-4 flex items-center justify-between">
               <div>
@@ -507,11 +528,16 @@ export default function InvestmentsClient() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_1.3fr]">
-          <div className="rounded-2xl border border-border bg-card/70 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+            className="rounded-2xl border border-border bg-card/70 p-6"
+          >
             <div className="mb-5">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 Portfolio
@@ -565,9 +591,14 @@ export default function InvestmentsClient() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-border bg-card/70 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            className="rounded-2xl border border-border bg-card/70 p-6"
+          >
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -580,343 +611,374 @@ export default function InvestmentsClient() {
               </span>
             </div>
 
-            {assets.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No assets in your portfolio
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleOpenForm()}
-                  className="mt-4 text-sm text-primary hover:underline"
+            <AnimatePresence mode="wait">
+              {assets.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center"
                 >
-                  Add your first asset
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assets.map((asset) => (
-                  <div
-                    key={asset.id ?? asset.symbol}
-                    className="rounded-xl border border-border bg-background/60 p-4 transition hover:bg-muted/30"
+                  <p className="text-sm text-muted-foreground">
+                    No assets in your portfolio
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenForm()}
+                    className="mt-4 text-sm text-primary hover:underline"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <div>
-                            <p className="text-sm font-semibold">{asset.symbol}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatAssetName(asset.name)}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
-                            </p>
-                          </div>
-                          <div
-                            className={cn(
-                              "rounded-full px-3 py-1 text-xs",
-                              asset.changePercent >= 0
-                                ? "bg-emerald-500/10 text-emerald-300"
-                                : "bg-rose-500/10 text-rose-300",
-                            )}
-                          >
-                            {asset.changePercent >= 0 ? "+" : ""}
-                            {asset.changePercent.toFixed(2)}%
-                          </div>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
-                          <div>
-                            <p className="text-muted-foreground">Quantity</p>
-                            <p className="mt-1 font-semibold text-foreground">
-                              {formatNumber(asset.quantity)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Avg Cost</p>
-                            <div className="mt-1 space-y-1 text-foreground">
-                              <p className="flex items-center gap-1 text-sm font-semibold">
-                                <TurkishLira className="h-3.5 w-3.5" />
-                                {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+                    Add your first asset
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-4"
+                >
+                  {assets.map((asset, index) => (
+                    <motion.div
+                      key={asset.id ?? asset.symbol}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05, duration: 0.3 }}
+                      className="rounded-xl border border-border bg-background/60 p-4 transition hover:bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">{asset.symbol}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatAssetName(asset.name)}
                               </p>
-                              {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  {(() => {
-                                    const Icon = getCurrencyIcon(asset.originalCurrency);
-                                    return <Icon className="h-3 w-3" />;
-                                  })()}
-                                  {formatCurrencyTrimZeros(
-                                    asset.avgCostOriginal ?? asset.avgCostTry,
-                                    asset.originalCurrency,
-                                    6,
-                                  )}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Current Price</p>
-                            <div className="mt-1 space-y-1 text-foreground">
-                              <p className="flex items-center gap-1 text-sm font-semibold">
-                                <TurkishLira className="h-3.5 w-3.5" />
-                                {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
+                              <p className="text-[11px] text-muted-foreground">
+                                {asset.stockMarketDisplayName ?? asset.stockMarket ?? "Other"}
                               </p>
-                              {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
-                                <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  {(() => {
-                                    const Icon = getCurrencyIcon(asset.originalCurrency);
-                                    return <Icon className="h-3 w-3" />;
-                                  })()}
-                                  {formatCurrencyTrimZeros(
-                                    asset.currentPriceOriginal ?? asset.currentPriceTry,
-                                    asset.originalCurrency,
-                                    6,
-                                  )}
-                                </p>
-                              )}
                             </div>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">P/L</p>
-                            <p
+                            <div
                               className={cn(
-                                "mt-1 font-semibold",
-                                asset.profitLossTry >= 0
-                                  ? "text-emerald-400"
-                                  : "text-rose-400",
+                                "rounded-full px-3 py-1 text-xs",
+                                asset.changePercent >= 0
+                                  ? "bg-emerald-500/10 text-emerald-300"
+                                  : "bg-rose-500/10 text-rose-300",
                               )}
                             >
-                              {asset.profitLossTry >= 0 ? "+" : ""}
-                              {formatCurrency(asset.profitLossTry)}
-                            </p>
+                              {asset.changePercent >= 0 ? "+" : ""}
+                              {asset.changePercent.toFixed(2)}%
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid grid-cols-2 gap-4 text-xs sm:grid-cols-4">
+                            <div>
+                              <p className="text-muted-foreground">Quantity</p>
+                              <p className="mt-1 font-semibold text-foreground">
+                                {formatNumber(asset.quantity)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Avg Cost</p>
+                              <div className="mt-1 space-y-1 text-foreground">
+                                <p className="flex items-center gap-1 text-sm font-semibold">
+                                  <TurkishLira className="h-3.5 w-3.5" />
+                                  {formatCurrencyTrimZeros(asset.avgCostTry, "TRY", 6)}
+                                </p>
+                                {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    {(() => {
+                                      const Icon = getCurrencyIcon(asset.originalCurrency);
+                                      return <Icon className="h-3 w-3" />;
+                                    })()}
+                                    {formatCurrencyTrimZeros(
+                                      asset.avgCostOriginal ?? asset.avgCostTry,
+                                      asset.originalCurrency,
+                                      6,
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Current Price</p>
+                              <div className="mt-1 space-y-1 text-foreground">
+                                <p className="flex items-center gap-1 text-sm font-semibold">
+                                  <TurkishLira className="h-3.5 w-3.5" />
+                                  {formatCurrencyTrimZeros(asset.currentPriceTry, "TRY", 6)}
+                                </p>
+                                {asset.originalCurrency && asset.originalCurrency !== "TRY" && (
+                                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    {(() => {
+                                      const Icon = getCurrencyIcon(asset.originalCurrency);
+                                      return <Icon className="h-3 w-3" />;
+                                    })()}
+                                    {formatCurrencyTrimZeros(
+                                      asset.currentPriceOriginal ?? asset.currentPriceTry,
+                                      asset.originalCurrency,
+                                      6,
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">P/L</p>
+                              <p
+                                className={cn(
+                                  "mt-1 font-semibold",
+                                  asset.profitLossTry >= 0
+                                    ? "text-emerald-400"
+                                    : "text-rose-400",
+                                )}
+                              >
+                                {asset.profitLossTry >= 0 ? "+" : ""}
+                                {formatCurrency(asset.profitLossTry)}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="ml-4 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenForm(asset)}
-                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRequest(asset)}
-                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        <div className="ml-4 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenForm(asset)}
+                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRequest(asset)}
+                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-500/10 hover:text-rose-400"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
 
-        {isFormOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  {editingAsset ? "Edit Asset" : "Add New Asset"}
-                </h2>
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted/50"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="assetType"
-                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
+        <AnimatePresence>
+          {isFormOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-md rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">
+                    {editingAsset ? "Edit Asset" : "Add New Asset"}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="rounded-lg p-2 text-muted-foreground transition hover:bg-muted/50"
                   >
-                    Asset Type
-                    {isEditing && <Lock className="h-3.5 w-3.5" />}
-                  </label>
-                  <select
-                    id="assetType"
-                    value={formData.assetType}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        assetType: e.target.value,
-                        symbol: "",
-                        stockMarket: "",
-                      }))
-                    }
-                    disabled={isEditing}
-                    className={cn(
-                      "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                      isEditing && "cursor-not-allowed opacity-60",
-                    )}
-                  >
-                    <option value="FUND">Fund</option>
-                    <option value="STOCK">Stock</option>
-                    <option value="GOLD_SILVER">Gold & Silver</option>
-                    <option value="CURRENCY">Currency</option>
-                  </select>
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
 
-                {!isEditing && requiresMarket && (
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label
-                      htmlFor="stockMarket"
-                      className="mb-2 block text-xs text-muted-foreground"
+                      htmlFor="assetType"
+                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
                     >
-                      Stock Market
+                      Asset Type
+                      {isEditing && <Lock className="h-3.5 w-3.5" />}
                     </label>
                     <select
-                      id="stockMarket"
-                      value={formData.stockMarket}
+                      id="assetType"
+                      value={formData.assetType}
                       onChange={(e) =>
-                        setFormData({ ...formData, stockMarket: e.target.value })
-                      }
-                      disabled={availableMarkets.length === 0}
-                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      required
-                    >
-                      {availableMarkets.length === 0 && (
-                        <option value="">No markets available</option>
-                      )}
-                      {availableMarkets.length > 0 && (
-                        <option value="">Select market</option>
-                      )}
-                      {availableMarkets.map((market) => (
-                        <option key={market.id} value={market.id}>
-                          {market.label} · {market.suffix}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label
-                    htmlFor="symbol"
-                    className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
-                  >
-                    Symbol
-                    {isEditing && <Lock className="h-3.5 w-3.5" />}
-                  </label>
-                  {formData.assetType === "GOLD_SILVER" ||
-                  formData.assetType === "CURRENCY" ? (
-                    <select
-                      id="symbol"
-                      value={formData.symbol}
-                      onChange={(e) =>
-                        setFormData({ ...formData, symbol: e.target.value })
+                        setFormData((prev) => ({
+                          ...prev,
+                          assetType: e.target.value,
+                          symbol: "",
+                          stockMarket: "",
+                        }))
                       }
                       disabled={isEditing}
                       className={cn(
                         "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
                         isEditing && "cursor-not-allowed opacity-60",
                       )}
-                      required
                     >
-                      <option value="">Select an asset</option>
-                      {(supportedAssets[formData.assetType] ?? []).map((asset) => (
-                        <option key={asset.slug} value={asset.slug}>
-                          {asset.label}
-                        </option>
-                      ))}
+                      <option value="FUND">Fund</option>
+                      <option value="STOCK">Stock</option>
+                      <option value="GOLD_SILVER">Gold & Silver</option>
+                      <option value="CURRENCY">Currency</option>
                     </select>
-                  ) : (
+                  </div>
+
+                  {!isEditing && requiresMarket && (
+                    <div>
+                      <label
+                        htmlFor="stockMarket"
+                        className="mb-2 block text-xs text-muted-foreground"
+                      >
+                        Stock Market
+                      </label>
+                      <select
+                        id="stockMarket"
+                        value={formData.stockMarket}
+                        onChange={(e) =>
+                          setFormData({ ...formData, stockMarket: e.target.value })
+                        }
+                        disabled={availableMarkets.length === 0}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        required
+                      >
+                        {availableMarkets.length === 0 && (
+                          <option value="">No markets available</option>
+                        )}
+                        {availableMarkets.length > 0 && (
+                          <option value="">Select market</option>
+                        )}
+                        {availableMarkets.map((market) => (
+                          <option key={market.id} value={market.id}>
+                            {market.label} · {market.suffix}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label
+                      htmlFor="symbol"
+                      className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
+                    >
+                      Symbol
+                      {isEditing && <Lock className="h-3.5 w-3.5" />}
+                    </label>
+                    {formData.assetType === "GOLD_SILVER" ||
+                    formData.assetType === "CURRENCY" ? (
+                      <select
+                        id="symbol"
+                        value={formData.symbol}
+                        onChange={(e) =>
+                          setFormData({ ...formData, symbol: e.target.value })
+                        }
+                        disabled={isEditing}
+                        className={cn(
+                          "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                          isEditing && "cursor-not-allowed opacity-60",
+                        )}
+                        required
+                      >
+                        <option value="">Select an asset</option>
+                        {(supportedAssets[formData.assetType] ?? []).map((asset) => (
+                          <option key={asset.slug} value={asset.slug}>
+                            {asset.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        id="symbol"
+                        type="text"
+                        value={formData.symbol}
+                        onChange={(e) =>
+                          setFormData({ ...formData, symbol: e.target.value })
+                        }
+                        disabled={isEditing}
+                        placeholder="e.g., TCD, AAPL"
+                        className={cn(
+                          "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm uppercase transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                          isEditing && "cursor-not-allowed opacity-60",
+                        )}
+                        required
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="quantity"
+                      className="mb-2 block text-xs text-muted-foreground"
+                    >
+                      Quantity
+                    </label>
                     <input
-                      id="symbol"
-                      type="text"
-                      value={formData.symbol}
+                      id="quantity"
+                      type="number"
+                      step="0.000001"
+                      min="0"
+                      value={formData.quantity}
                       onChange={(e) =>
-                        setFormData({ ...formData, symbol: e.target.value })
+                        setFormData({ ...formData, quantity: e.target.value })
                       }
-                      disabled={isEditing}
-                      placeholder="e.g., TCD, AAPL"
-                      className={cn(
-                        "w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm uppercase transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                        isEditing && "cursor-not-allowed opacity-60",
-                      )}
+                      placeholder="0"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       required
                     />
-                  )}
-                </div>
+                  </div>
 
-                <div>
-                  <label
-                    htmlFor="quantity"
-                    className="mb-2 block text-xs text-muted-foreground"
-                  >
-                    Quantity
-                  </label>
-                  <input
-                    id="quantity"
-                    type="number"
-                    step="0.000001"
-                    min="0"
-                    value={formData.quantity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, quantity: e.target.value })
-                    }
-                    placeholder="0"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label
+                      htmlFor="avgCost"
+                      className="mb-2 block text-xs text-muted-foreground"
+                    >
+                      Average Cost{(() => {
+                        const currency = isEditing
+                          ? editingAsset?.originalCurrency
+                          : selectedMarket?.currency;
+                        return currency ? ` (${currency})` : "";
+                      })()}
+                    </label>
+                    <input
+                      id="avgCost"
+                      type="number"
+                      step="0.000001"
+                      min="0"
+                      value={formData.avgCost}
+                      onChange={(e) =>
+                        setFormData({ ...formData, avgCost: e.target.value })
+                      }
+                      placeholder="0.00"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label
-                    htmlFor="avgCost"
-                    className="mb-2 block text-xs text-muted-foreground"
-                  >
-                    Average Cost{(() => {
-                      const currency = isEditing
-                        ? editingAsset?.originalCurrency
-                        : selectedMarket?.currency;
-                      return currency ? ` (${currency})` : "";
-                    })()}
-                  </label>
-                  <input
-                    id="avgCost"
-                    type="number"
-                    step="0.000001"
-                    min="0"
-                    value={formData.avgCost}
-                    onChange={(e) =>
-                      setFormData({ ...formData, avgCost: e.target.value })
-                    }
-                    placeholder="0.00"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    required
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="submit"
-                    className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-                  >
-                    {editingAsset ? "Update Asset" : "Add Asset"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCloseForm}
-                    className="rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-medium transition hover:bg-muted/50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-        {modal && (
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                    >
+                      {editingAsset ? "Update Asset" : "Add Asset"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCloseForm}
+                      className="rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-medium transition hover:bg-muted/50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>        {modal && (
           <FeedbackModal
             open={modalOpen}
             type={modal.type}
