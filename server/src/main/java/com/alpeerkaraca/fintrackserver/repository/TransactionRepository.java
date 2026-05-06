@@ -55,4 +55,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
 
     @Query(value = "SELECT uuidv7()", nativeQuery = true)
     UUID generateUuidv7();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM Transaction t WHERE t.id IN :ids AND t.userProfile.id = :userProfileId")
+    void deleteByIdInAndUserProfileId(List<UUID> ids, UUID userProfileId);
 }

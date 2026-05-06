@@ -130,4 +130,16 @@ public class TransactionService {
         }
 
     }
+
+    @Transactional
+    public void deleteTransaction(UUID id, UUID userId) {
+        transactionRepository.deleteByIdAndUserProfileId(id, userId);
+        cacheService.evictAllUserCaches(userId);
+    }
+
+    @Transactional
+    public void deleteTransactions(List<UUID> ids, UUID userId) {
+        transactionRepository.deleteByIdInAndUserProfileId(ids, userId);
+        cacheService.evictAllUserCaches(userId);
+    }
 }
