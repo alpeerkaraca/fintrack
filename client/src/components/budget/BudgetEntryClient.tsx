@@ -2,11 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import {
   Calendar,
   CreditCard,
   DollarSign,
   FileText,
+  Filter,
   Plus,
   Tag,
   Trash2,
@@ -40,6 +42,7 @@ const getCurrentMonthKey = () => {
 };
 
 export default function BudgetEntryClient() {
+  const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
@@ -52,6 +55,7 @@ export default function BudgetEntryClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryMeta[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(searchParams.get("category"));
   const [modal, setModal] = useState<
     | {
         type: "success" | "error";
@@ -103,6 +107,11 @@ export default function BudgetEntryClient() {
     b.date.localeCompare(a.date),
   );
 
+  const filteredTransactions = useMemo(() => {
+    if (!categoryFilter) return monthlyTransactions;
+    return monthlyTransactions.filter((t) => t.category === categoryFilter);
+  }, [monthlyTransactions, categoryFilter]);
+
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -116,10 +125,10 @@ export default function BudgetEntryClient() {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.size === monthlyTransactions.length) {
+    if (selectedIds.size === filteredTransactions.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(monthlyTransactions.map((t) => t.id)));
+      setSelectedIds(new Set(filteredTransactions.map((t) => t.id)));
     }
   };
 
@@ -335,15 +344,6 @@ export default function BudgetEntryClient() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleDelete = (id: string) => {
-    const transaction = transactions.find((item) => item.id === id);
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-    openModal(
-      "success",
-      `${transaction?.title ?? "Transaction"} removed.`,
-    );
   };
 
   const totalIncome = monthlyTransactions
@@ -747,19 +747,33 @@ export default function BudgetEntryClient() {
               <input
                 type="checkbox"
                 checked={
-                  monthlyTransactions.length > 0 &&
-                  selectedIds.size === monthlyTransactions.length
+                  filteredTransactions.length > 0 &&
+                  selectedIds.size === filteredTransactions.length
                 }
                 onChange={handleSelectAll}
                 className="h-4 w-4 rounded border-border"
               />
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Transactions
-                </p>
-                <h2 className="text-lg font-semibold">
-                  {monthOptions.find((m) => m.value === selectedMonth)?.label}
-                </h2>
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Transactions
+                  </p>
+                  <h2 className="text-lg font-semibold">
+                    {monthOptions.find((m) => m.value === selectedMonth)?.label}
+                  </h2>
+                </div>
+                {categoryFilter && (
+                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                    <Filter className="h-3 w-3" />
+                    <span>{getCategoryLabel(categoryFilter)}</span>
+                    <button
+                      onClick={() => setCategoryFilter(null)}
+                      className="ml-1 hover:text-primary/70"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -774,7 +788,7 @@ export default function BudgetEntryClient() {
                 </button>
               )}
               <span className="text-sm text-muted-foreground">
-                {monthlyTransactions.length} total
+                {filteredTransactions.length} total
               </span>
             </div>
           </div>
@@ -795,7 +809,7 @@ export default function BudgetEntryClient() {
               >
                 <p className="text-sm text-muted-foreground">Loading transactions...</p>
               </motion.div>
-            ) : monthlyTransactions.length === 0 ? (
+            ) : filteredTransactions.length === 0 ? (
               <motion.div
                 key="empty"
                 initial={{ opacity: 0, y: 10 }}
@@ -805,14 +819,16 @@ export default function BudgetEntryClient() {
                 className="rounded-xl border border-dashed border-border bg-background/60 py-16 text-center"
               >
                 <p className="text-sm text-muted-foreground">
-                  No transactions found for this month
+                  {categoryFilter
+                    ? `No transactions found for ${getCategoryLabel(categoryFilter)}`
+                    : "No transactions found for this month"}
                 </p>
                 <button
                   type="button"
-                  onClick={() => setIsFormOpen(true)}
+                  onClick={() => categoryFilter ? setCategoryFilter(null) : setIsFormOpen(true)}
                   className="mt-4 text-sm text-primary hover:underline"
                 >
-                  Add your first transaction
+                  {categoryFilter ? "Clear filter" : "Add your first transaction"}
                 </button>
               </motion.div>
             ) : (
@@ -824,7 +840,7 @@ export default function BudgetEntryClient() {
                 transition={{ duration: 0.2 }}
                 className="space-y-3"
               >
-                {monthlyTransactions.map((transaction, index) => (
+                {filteredTransactions.map((transaction, index) => (
                   <motion.div
                     key={transaction.id}
                     initial={{ opacity: 0, y: 20 }}
