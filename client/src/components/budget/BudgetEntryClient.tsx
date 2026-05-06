@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Calendar,
   CreditCard,
@@ -39,6 +40,7 @@ const getCurrentMonthKey = () => {
 };
 
 export default function BudgetEntryClient() {
+  const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
@@ -100,6 +102,12 @@ export default function BudgetEntryClient() {
   const monthlyTransactions = [...transactions].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setIsFormOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let isActive = true;

@@ -233,12 +233,9 @@ export default function DashboardClient() {
     };
   }, []);
 
-  const forecast = dashboard?.forecast ?? [];
   const selectedMonthLabel =
     monthOptions.find((m) => m.value === selectedMonth)?.label ?? selectedMonth;
   const summary = dashboard?.summary;
-  const currentUsdRate =
-    dashboard?.currentUsdTryRate ?? dashboard?.summary.usdRate ?? 0;
   const recentTransactions = dashboard?.recentTransactions?.content ?? [];
 
   const latestTransactions = recentTransactions.slice(0, 6);
@@ -253,11 +250,11 @@ export default function DashboardClient() {
 
   const netSavingsChart = useMemo(
     () =>
-      forecast.map((item) => ({
+      (dashboard?.forecast ?? []).map((item) => ({
         month: item.label,
         netSavings: Number((item.savings / 1000).toFixed(1)),
       })),
-    [forecast],
+    [dashboard?.forecast],
   );
 
   if (isLoading && !dashboard) {

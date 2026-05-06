@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import BudgetEntryClient from "@/components/budget/BudgetEntryClient";
 
 export default function BudgetPage() {
-  return <BudgetEntryClient />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BudgetEntryClient />
+    </Suspense>
+  );
 }

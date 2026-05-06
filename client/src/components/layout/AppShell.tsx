@@ -80,7 +80,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex flex-col lg:flex-row">
-        <aside className="flex h-full w-full flex-col border-b border-border bg-card/60 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
+        <aside className="flex h-full w-full flex-col border-b border-border bg-card/60 lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:border-b-0 lg:border-r">
           <div className="px-6 py-7 flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary grid place-items-center font-semibold">
               FT
