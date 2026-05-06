@@ -34,24 +34,22 @@ export default function RegisterClient() {
     const salary = Number(netSalaryUsd);
 
     if (!username.trim()) {
-      setError("Username is required.");
+      setError("USERNAME_REQUIRED");
       return;
     }
 
     if (!isValidEmail(email)) {
-      setError("Please enter a valid email.");
+      setError("INVALID_EMAIL_FORMAT");
       return;
     }
 
     if (!isValidPassword(password)) {
-      setError(
-        "Password must include uppercase, lowercase, number, symbol and 8+ chars.",
-      );
+      setError("PASSWORD_CRITERIA_NOT_MET");
       return;
     }
 
     if (!Number.isFinite(salary) || salary <= 0) {
-      setError("Net salary must be greater than 0.");
+      setError("INVALID_SALARY_VALUE");
       return;
     }
 
@@ -67,8 +65,8 @@ export default function RegisterClient() {
     } catch (submissionError) {
       const message =
         submissionError instanceof Error
-          ? submissionError.message
-          : "Register failed.";
+          ? submissionError.message.toUpperCase()
+          : "REGISTRATION_FAILED";
       setError(message);
     } finally {
       setLoading(false);
@@ -76,77 +74,126 @@ export default function RegisterClient() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
+    <div className="mx-auto flex min-h-screen w-full max-w-lg items-center px-6 py-12 font-mono">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full rounded-2xl border border-border bg-card/70 p-6"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="w-full rounded-none border-2 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:border-white dark:bg-zinc-950 dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]"
       >
-        <h1 className="text-2xl font-semibold">Create account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Use username, email, password and your net salary in USD.
-        </p>
+        <div className="mb-8 border-b-2 border-black pb-4 dark:border-white">
+          <h1 className="text-4xl font-black uppercase tracking-tighter">
+            Register
+          </h1>
+          <p className="mt-2 text-xs font-bold uppercase text-slate-500">
+            System Registration // New_Account
+          </p>
+        </div>
 
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="username">
-              Username
-            </label>
-            <input
-              id="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
-              required
-            />
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                className="block text-xs font-black uppercase tracking-widest"
+                htmlFor="username"
+              >
+                Username_
+              </label>
+              <input
+                id="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
+                required
+                placeholder="USER_01"
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                className="block text-xs font-black uppercase tracking-widest"
+                htmlFor="email"
+              >
+                Email_
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
+                required
+                placeholder="USER@DOMAIN.COM"
+              />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="password">
-              Password
+
+          <div className="space-y-2">
+            <label
+              className="block text-xs font-black uppercase tracking-widest"
+              htmlFor="password"
+            >
+              Password_
             </label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
               required
+              placeholder="••••••••"
             />
           </div>
-          <ul className="space-y-1 text-xs text-muted-foreground">
-            <li className={passwordChecks.minLength ? "text-emerald-400" : ""}>
-              At least 8 characters
-            </li>
-            <li className={passwordChecks.uppercase ? "text-emerald-400" : ""}>
-              At least 1 uppercase letter
-            </li>
-            <li className={passwordChecks.lowercase ? "text-emerald-400" : ""}>
-              At least 1 lowercase letter
-            </li>
-            <li className={passwordChecks.number ? "text-emerald-400" : ""}>
-              At least 1 number
-            </li>
-            <li className={passwordChecks.symbol ? "text-emerald-400" : ""}>
-              At least 1 symbol
-            </li>
-          </ul>
-          <div>
-            <label className="mb-1 block text-sm text-muted-foreground" htmlFor="salary">
-              Net Salary (USD)
+
+          <div className="rounded-none border-2 border-black bg-slate-50 p-4 dark:border-white dark:bg-zinc-900">
+            <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Security_Checklist:
+            </p>
+            <ul className="grid grid-cols-1 gap-x-4 gap-y-1 text-[10px] font-bold uppercase sm:grid-cols-2">
+              <li
+                className={
+                  passwordChecks.minLength ? "text-green-600" : "text-slate-400"
+                }
+              >
+                {passwordChecks.minLength ? "[X]" : "[ ]"} 8+ CHARACTERS
+              </li>
+              <li
+                className={
+                  passwordChecks.uppercase ? "text-green-600" : "text-slate-400"
+                }
+              >
+                {passwordChecks.uppercase ? "[X]" : "[ ]"} UPPERCASE
+              </li>
+              <li
+                className={
+                  passwordChecks.lowercase ? "text-green-600" : "text-slate-400"
+                }
+              >
+                {passwordChecks.lowercase ? "[X]" : "[ ]"} LOWERCASE
+              </li>
+              <li
+                className={
+                  passwordChecks.number ? "text-green-600" : "text-slate-400"
+                }
+              >
+                {passwordChecks.number ? "[X]" : "[ ]"} NUMBER
+              </li>
+              <li
+                className={
+                  passwordChecks.symbol ? "text-green-600" : "text-slate-400"
+                }
+              >
+                {passwordChecks.symbol ? "[X]" : "[ ]"} SYMBOL
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="block text-xs font-black uppercase tracking-widest"
+              htmlFor="salary"
+            >
+              Net_Salary_USD_
             </label>
             <input
               id="salary"
@@ -155,32 +202,43 @@ export default function RegisterClient() {
               step="0.01"
               value={netSalaryUsd}
               onChange={(event) => setNetSalaryUsd(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm"
+              className="w-full rounded-none border-2 border-black bg-white px-4 py-3 text-sm font-bold focus:bg-slate-50 focus:outline-none dark:border-white dark:bg-zinc-900 dark:focus:bg-zinc-800"
               required
+              placeholder="5000.00"
             />
           </div>
 
           {error ? (
-            <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
-              {error}
-            </p>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.1 }}
+              className="rounded-none border-2 border-black bg-red-600 p-3 text-xs font-black text-white uppercase dark:border-white"
+            >
+              ERR: {error}
+            </motion.div>
           ) : null}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            className="w-full rounded-none border-2 border-black bg-black py-4 text-sm font-black text-white uppercase transition-all hover:bg-white hover:text-black disabled:opacity-50 dark:border-white dark:bg-white dark:text-black dark:hover:bg-black dark:hover:text-white"
           >
-            {loading ? "Creating account..." : "Register"}
+            {loading ? "CREATING_IDENTITY..." : "Register_User"}
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
+        <div className="mt-8 border-t-2 border-black pt-6 dark:border-white">
+          <p className="text-xs font-bold uppercase">
+            Existing user?{" "}
+            <Link
+              href="/login"
+              className="rounded-none bg-black px-2 py-1 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
+            >
+              SIGN_IN_HERE
+            </Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
