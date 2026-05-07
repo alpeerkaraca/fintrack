@@ -10,6 +10,10 @@ target/
 *.jar
 *.war
 
+# Python Ignored Files
+__pycache__/
+*.pyc
+.venv/
 # Certificates and Keys
 *.pem
 
@@ -24,3 +28,4 @@ target/
 *.bak
 .github/
 agents.md.github/copilot-instructions.md
+
